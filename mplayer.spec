@@ -1,12 +1,3 @@
-%define build_3264bit     0
-%{?_with_3264bit: %{expand: %%global build_3264bit 1}}
-%{?_without_3264bit: %{expand: %%global build_3264bit 0}}
-%if %{build_3264bit}
-%define	pkgext	32
-%else
-%define pkgext	%{nil}
-%endif
-
 %define build_plf 0
 %define build_optimization 0
 %define build_debug 0
@@ -141,8 +132,7 @@
 %{?_with_vpx: %{expand: %%global build_vpx 1}}
 %{?_without_vpx: %{expand: %%global build_vpx 0}}
 
-%define Name	mplayer2
-Name:		mplayer2%{pkgext}
+Name:		mplayer2
 Version:	2.0
 %define	gitdate	20120110
 Release:	1.%{gitdate}.1%{?extrarelsuffix}
@@ -210,7 +200,6 @@ BuildRequires:  xmms-devel
 BuildRequires:	libggiwmh-devel
 %endif
 %if %build_smb
-# require samba < 3.2.0 to avoid shipping GPLv2 vs GPLv3
 BuildRequires:	libsmbclient-devel
 %endif
 %if %build_faac
@@ -293,7 +282,7 @@ Suggests:	libx264.so.120%{_ext}
 Suggests:	libdca.so.0%{_ext}
 Suggests:	libdvdcss.so.2%{_ext}
 
-%rename		mplayer%{pkgext}1.0
+%rename		mplayer1.0
 %rename		mplayer
 Conflicts:	mplayer-gui
 # we might wanna allow for mencoder to still be packaged..
@@ -331,11 +320,11 @@ win32-codecs, real-codecs and xanim-codecs.
 %endif
 
 %package	doc
-Summary:	%{Name} documentation
+Summary:	%{name} documentation
 Group:		Books/Computer books
 
 %description	doc
-This package contains documentation for %{Name}.
+This package contains documentation for %{name}.
 
 %prep
 %setup -q
@@ -363,9 +352,6 @@ export CFLAGS="$CFLAGS -mcpu=7450 -maltivec"
 %endif
 %if %build_directfb
 export CPPFLAGS="-I%{_includedir}/directfb"
-%endif
-%if %{build_3264bit}
-export EXESUF=32
 %endif
 export LDFLAGS="%{?ldflags}"
 ./configure \
