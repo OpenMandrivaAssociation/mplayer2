@@ -142,10 +142,6 @@ Source0:	%{name}-%{version}-%{gitdate}.tar.xz
 Source4:	Blue-1.5.tar.bz2
 Source5:	kernel-version.sh
 Patch0:		mplayer-mdvconfig.patch
-#anssi fix vp6f playback, patch okayed by ffmpeg upstream
-Patch3:		mplayer-mp3lib-no-strict-aliasing.patch
-Patch7:		mplayer-1.0pre1-nomgafirst.patch
-Patch21:	mplayer-1.0rc2-compiz.patch
 # fixes for crashes found while fixing CVE-2008-1558
 Patch28:	mplayer-rtsp-extra-fixes.patch
 Patch39:	mplayer-dlopen-libfaac-libfaad-and-libx264.patch
@@ -329,9 +325,6 @@ This package contains documentation for %{name}.
 %prep
 %setup -q
 %patch0 -p1 -b .mdv~
-#%patch3 -p1 -b .mp2
-#%patch7 -p1 -b .mga
-#%patch21 -p0 -b .compiz
 %patch28 -p1 -b .rtsp-extra-fixes
 #patch39 -p1 -b .dlopen~
 %patch40 -p1 -b .libpostproc~
