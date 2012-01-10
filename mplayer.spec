@@ -410,18 +410,17 @@ export LDFLAGS="%{?ldflags}"
 
 
 # Keep this line before empty end %%configure (ppc conditionnal pb)
-make EXESUF=%{pkgext}
 #gw make sure we have our version string included:
 fgrep %{release} version.h
 
 %install
 install -d -m 755 %{buildroot}%{_datadir}/%{name}
 install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
-install -m755 mplayer%{pkgext} -D %{buildroot}%{_bindir}/mplayer%{pkgext}
+install -m755 mplayer -D %{buildroot}%{_bindir}/mplayer
 for lang in de fr hu pl es it zh_CN en; do
-    install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer%{pkgext}.1
+    install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer.1
 done 
-%find_lang mplayer%{pkgext} --with-man
+%find_lang mplayer --with-man
 
 install -m 644 etc/example.conf %{buildroot}%{_sysconfdir}/%{name}/mplayer.conf
 
@@ -429,12 +428,12 @@ install -m 644 etc/example.conf %{buildroot}%{_sysconfdir}/%{name}/mplayer.conf
 export DONT_STRIP=1
 %endif
 
-%files -f mplayer%{pkgext}.lang
+%files -f mplayer.lang
 %doc AUTHORS README Copyright
 %dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/%{name}/mplayer.conf
-%{_bindir}/mplayer%{pkgext}
-%{_mandir}/man1/mplayer%{pkgext}.1*
+%{_bindir}/mplayer
+%{_mandir}/man1/mplayer.1*
 %dir %{_datadir}/%{name}
 
 %files doc
