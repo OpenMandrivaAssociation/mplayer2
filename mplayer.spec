@@ -71,7 +71,7 @@ Source5:	kernel-version.sh
 Patch0:		mplayer-mdvconfig.patch
 # fixes for crashes found while fixing CVE-2008-1558
 Patch28:	mplayer-rtsp-extra-fixes.patch
-Patch39:	mplayer-dlopen-libfaac-libfaad-and-libx264.patch
+Patch39:	mplayer2-20120110-dlopen-libfaad-and-libdca.patch
 Patch40:	mplayer2-20120110-fix-required-libpostproc-version.patch
 URL:		http://www.mplayerhq.hu
 License:	GPLv3
@@ -246,7 +246,7 @@ This package contains documentation for %{name}.
 %setup -q
 %patch0 -p1 -b .mdv~
 %patch28 -p1 -b .rtsp-extra-fixes
-#patch39 -p1 -b .dlopen~
+%patch39 -p1 -b .dlopen~
 %patch40 -p1 -b .libpostproc~
 
 echo %{gitdate} > snapshot_version
@@ -273,12 +273,6 @@ export LDFLAGS="%{?ldflags}"
 	--libdir=%{_libdir} \
 %if !%{with optimization}
 	--enable-runtime-cpudetection \
-%if !%{with dts}
-	--disable-libdca \
-%if 0
-	--enable-libdca-dlopen \
-%endif
-%endif
 %ifarch %{ix86}
         --enable-mmx \
         --enable-3dnow \
@@ -286,6 +280,10 @@ export LDFLAGS="%{?ldflags}"
         --enable-sse2 \
         --enable-fastmemcpy \
 %endif
+%endif
+%if !%{with dts}
+	--disable-libdca \
+	--enable-libdca-dlopen \
 %endif
 	--enable-freetype \
 	--enable-nas \
@@ -295,12 +293,9 @@ export LDFLAGS="%{?ldflags}"
 	--disable-sighandler \
 %endif
 	--language=all \
-	\
 %if ! %{with faad}
 	--disable-faad \
-%if 0
 	--enable-faad-dlopen \
-%endif
 %endif
 	--disable-libdvdcss-internal \
 %if %{with lirc}
