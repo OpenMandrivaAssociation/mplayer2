@@ -267,18 +267,17 @@ echo %{gitdate} > snapshot_version
 mv DOCS/README README.DOCS
 
 %build
-%if !%{with optimization}
-export CFLAGS="$CFLAGS $RPM_OPT_FLAGS"
+%if %{with optimization}
+%global optflags %{nil}
 %endif
 %if %{with debug}
-export CFLAGS="$CFLAGS -g"
+%global	optflags %{optflags} -O0
 %endif
 %ifarch ppc
-export CFLAGS="$CFLAGS -mcpu=7450 -maltivec"
+%global	optflags %{optflags} -mcpu=7450 -maltivec
 %endif
-%if %{with directfb}
 export CPPFLAGS="-I%{_includedir}/directfb"
-%endif
+export CFLAGS="%{optflags}"
 export LDFLAGS="%{?ldflags}"
 ./configure \
 	--prefix=%{_prefix} \
