@@ -1,4 +1,4 @@
-%bcond_with	plf
+%bcond_withoout	dlopen
 %bcond_with	optimization
 %bcond_with	debug
 
@@ -30,7 +30,7 @@
 %bcond_without	vdpau
 %bcond_with	ivtv
 
-%if %{mdvver} < 201100 && !%{with plf}
+%if %{mdvver} < 201100
 %bcond_with	libass
 %bcond_with	vpx
 %bcond_with	rtmp
@@ -44,19 +44,14 @@
 %bcond_without	vesa
 %endif
 
-%if %{with plf}
-%define distsuffix plf
-%if %{mdvver} >= 201100
-# make EVR of plf build higher than regular to allow update, needed with rpm5 mkrel
-%define extrarelsuffix plf
-%endif
-%bcond_without	faad
-%bcond_without	xvid
-%bcond_without	dts
-%else
+%if %{with dlopen}
 %bcond_with	faad
 %bcond_with	xvid
 %bcond_with	dts
+%else
+%bcond_without	faad
+%bcond_without	xvid
+%bcond_without	dts
 %endif
 
 Name:		mplayer2
@@ -225,15 +220,6 @@ english, czech, etc), cyrillic, korean fonts, and OSD?
 
 Note: If you want to play Real content, you need to have the content
 of RealPlayer's Codecs directory in %{_libdir}/codecs/
-%if %{with plf}
-
-This package is in PLF because some included codecs are covered by
-patents.  It also includes support for reading DVDs encrypted with CSS
-which might be illegal in some countries.
-
-For non-free binary codecs support you should install the packages
-win32-codecs, real-codecs and xanim-codecs.
-%endif
 
 %package	doc
 Summary:	%{name} documentation
