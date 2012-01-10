@@ -161,7 +161,7 @@ Patch28:	mplayer-rtsp-extra-fixes.patch
 Patch39:	mplayer-dlopen-libfaac-libfaad-and-libx264.patch
 Patch40:	mplayer2-20120110-fix-required-libpostproc-version.patch
 URL:		http://www.mplayerhq.hu
-License:	GPLv2
+License:	GPLv3
 Group:		Video
 BuildRequires:	ffmpeg-devel >= 0.9.1
 BuildRequires:	pkgconfig(ncurses)
@@ -211,7 +211,7 @@ BuildRequires:	libggiwmh-devel
 %endif
 %if %build_smb
 # require samba < 3.2.0 to avoid shipping GPLv2 vs GPLv3
-BuildRequires:	libsmbclient-devel < 3.2.0
+BuildRequires:	libsmbclient-devel
 %endif
 %if %build_faac
 BuildRequires:	libfaac-devel
