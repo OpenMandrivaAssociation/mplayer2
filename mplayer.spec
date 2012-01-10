@@ -412,6 +412,7 @@ export LDFLAGS="%{?ldflags}"
 %endif
 	--enable-dvdread
 
+%make
 
 %install
 install -d -m 755 %{buildroot}%{_datadir}/mplayer
