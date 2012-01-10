@@ -4,7 +4,6 @@
 
 %bcond_without	yasm
 %bcond_without	live
-%bcond_without	vesa
 %bcond_without	theora
 %bcond_with	ggi
 %bcond_without	lirc
@@ -26,32 +25,28 @@
 %bcond_with	openal
 %bcond_without	pulse
 %bcond_without	schroedinger
-%bcond_with	faac
-%bcond_with	faad
-%bcond_with	x264
-%bcond_with	xvid
-%bcond_with	dts
 %bcond_without	directfb
 %bcond_without	v4l2
 %bcond_without	vdpau
 %bcond_with	ivtv
-%bcond_without	libass
-%bcond_without	vpx
-%bcond_without	rtmp
 
-%if %mdvver < 201100 && !%{with plf}
+%if %{mdvver} < 201100 && !%{with plf}
 %bcond_with	libass
 %bcond_with	vpx
 %bcond_with	rtmp
+%else
+%bcond_without	libass
+%bcond_without	vpx
+%bcond_without	rtmp
 %endif
 
-%ifnarch %{ix86}
-%bcond_with	vesa
+%ifarch %{ix86}
+%bcond_without	vesa
 %endif
 
 %if %{with plf}
 %define distsuffix plf
-%if %mdvver >= 201100
+%if %{mdvver} >= 201100
 # make EVR of plf build higher than regular to allow update, needed with rpm5 mkrel
 %define extrarelsuffix plf
 %endif
@@ -60,6 +55,12 @@
 %bcond_without	xvid
 %bcond_without	dts
 %bcond_without	x264
+%else
+%bcond_with	faac
+%bcond_with	faad
+%bcond_with	xvid
+%bcond_with	dts
+%bcond_with	x264
 %endif
 
 Name:		mplayer2
