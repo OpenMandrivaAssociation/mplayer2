@@ -50,17 +50,13 @@
 # make EVR of plf build higher than regular to allow update, needed with rpm5 mkrel
 %define extrarelsuffix plf
 %endif
-%bcond_without	faac
 %bcond_without	faad
 %bcond_without	xvid
 %bcond_without	dts
-%bcond_without	x264
 %else
-%bcond_with	faac
 %bcond_with	faad
 %bcond_with	xvid
 %bcond_with	dts
-%bcond_with	x264
 %endif
 
 Name:		mplayer2
@@ -129,14 +125,8 @@ BuildRequires:	libggiwmh-devel
 %if %{with smb}
 BuildRequires:	libsmbclient-devel
 %endif
-%if %{with faac}
-BuildRequires:	libfaac-devel
-%endif
 %if %{with faad}
 BuildRequires:	libfaad2-devel
-%endif
-%if %{with x264}
-BuildRequires:	pkgconfig(x264) >= 0.120
 %endif
 %if %{with xvid}
 BuildRequires:	xvid-devel >= 1.0.0-0.beta2.1plf
@@ -205,11 +195,8 @@ BuildRequires:	pkgconfig(dvdread)
 %else
 %global	_ext	%{nil}
 %endif
-Suggests:	libfaac.so.0%{_ext}
 Suggests:	libfaad.so.2%{_ext}
-Suggests:	libx264.so.120%{_ext}
 Suggests:	libdca.so.0%{_ext}
-Suggests:	libdvdcss.so.2%{_ext}
 
 %rename		mplayer1.0
 %rename		mplayer
@@ -314,14 +301,6 @@ export LDFLAGS="%{?ldflags}"
 %if 0
 	--enable-faad-dlopen \
 %endif
-%endif
-%if 0
-#!%{with faac}
-	--enable-faac-dlopen \
-%endif
-%if 0
-#!%{with x264}
-	--enable-x264-dlopen \
 %endif
 	--disable-libdvdcss-internal \
 %if %{with lirc}
