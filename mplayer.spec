@@ -81,19 +81,19 @@ BuildRequires:	pkgconfig(ncurses)
 %if %{with aa}
 BuildRequires:	aalib-devel
 %endif
-BuildRequires:  a52dec-devel
+BuildRequires:	a52dec-devel
 %if %{with arts}
-BuildRequires:  arts-devel
+BuildRequires:	arts-devel
 %endif
 
 %if %{with jack}
-BuildRequires:  pkgconfig(jack)
+BuildRequires:	pkgconfig(jack)
 %endif
 %if %{with pulse}
-BuildRequires:  pkgconfig(libpulse)
+BuildRequires:	pkgconfig(libpulse)
 %endif
 %if %{with openal}
-BuildRequires:  pkgconfig(openal)
+BuildRequires:	pkgconfig(openal)
 %endif
 %if %{with cdda}
 BuildRequires:	cdda-devel
@@ -110,14 +110,14 @@ BuildRequires:	openjpeg-devel
 %if %{with lirc}
 BuildRequires:	pkgconfig(liblircclient0)
 %endif
-BuildRequires:  pkgconfig(mad)
-BuildRequires:  nas-devel
+BuildRequires:	pkgconfig(mad)
+BuildRequires:	nas-devel
 BuildRequires:	pkgconfig(libpng15)
 %if %{with sdl}
 BuildRequires:	pkgconfig(sdl) >= 1.1.8
 %endif
 %if %{with xmms}
-BuildRequires:  xmms-devel
+BuildRequires:	xmms-devel
 %endif
 %if %{with ggi}
 BuildRequires:	libggiwmh-devel
