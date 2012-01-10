@@ -260,7 +260,7 @@ This package contains documentation for %{name}.
 #patch39 -p1 -b .dlopen~
 %patch40 -p1 -b .libpostproc~
 
-perl -pi -e 's^r\$git_revision^%{gitdate}^' version.sh
+echo %{gitdate} > snapshot_version
 
 mv DOCS/README README.DOCS
 
@@ -411,8 +411,6 @@ export LDFLAGS="%{?ldflags}"
 
 
 # Keep this line before empty end %%configure (ppc conditionnal pb)
-#gw make sure we have our version string included:
-fgrep %{release} version.h
 
 %install
 install -d -m 755 %{buildroot}%{_datadir}/mplayer
