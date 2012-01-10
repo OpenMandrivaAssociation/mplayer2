@@ -198,6 +198,8 @@ BuildRequires:	ungif-devel
 BuildRequires:	yasm
 %endif
 BuildRequires:	pkgconfig(libbs2b)
+BuildRequires:	pkgconfig(dvdread)
+
 %if "%{_lib}" == "lib64"
 %global	_ext	()(64bit)
 %else
@@ -235,7 +237,7 @@ subtitles (9 supported types!!!) with european/ISO 8859-1,2 (hungarian,
 english, czech, etc), cyrillic, korean fonts, and OSD?
 
 Note: If you want to play Real content, you need to have the content
-of RealPlayer's Codecs directory in %_libdir/codecs/
+of RealPlayer's Codecs directory in %{_libdir}/codecs/
 %if %{with plf}
 
 This package is in PLF because some included codecs are covered by
@@ -408,9 +410,8 @@ export LDFLAGS="%{?ldflags}"
 %if ! %{with vdpau}
 	--disable-vdpau \
 %endif
+	--enable-dvdread
 
-
-# Keep this line before empty end %%configure (ppc conditionnal pb)
 
 %install
 install -d -m 755 %{buildroot}%{_datadir}/mplayer
