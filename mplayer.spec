@@ -7,21 +7,9 @@
 %define pkgext	%{nil}
 %endif
 
-%define name		mplayer2%{pkgext}
-%define	oldname		mplayer
-%define Name		mplayer2
-%define Summary		Movie player for linux
-%define version		2.0
-%define	gitdate		20120110
-%define release		1.%{gitdate}.1
-
 %define build_plf 0
 %define build_optimization 0
 %define build_debug 0
-
-%define kernel_version	%(/bin/bash %{SOURCE5})
-%define kver 		%(/bin/bash %{SOURCE5} | sed -e 's/-/./')
-%define kvername	%(/bin/bash %{SOURCE5} | sed -e 's/-/./' | sed -e 's/mdk//')
 
 %define build_yasm	1
 %define build_live	1
@@ -35,9 +23,7 @@
 %define build_cdda	1
 %define build_compiz	0
 %define build_dirac	1
-%define build_dv	1
 %define build_sdl	1
-%define build_lzo	1
 %define build_smb	1
 %define build_mga	1
 %define build_fbdev	1
@@ -49,8 +35,6 @@
 %define build_openal	0
 %define build_pulse	1
 %define build_schroedinger	1
-%define build_twolame 0
-%define build_lame 0
 %define build_faac 0
 %define build_faad 0
 %define build_x264 0
@@ -64,17 +48,13 @@
 %define build_vpx 1
 %define build_rtmp 1
 
-%if %mdkversion >= 200900
-%define build_smb       0
-%endif
-
 %if %mdvver < 201100 && !%build_plf
 %define build_libass 0
 %define build_vpx 0
 %define build_rtmp 0
 %endif
 
-%ifnarch %ix86
+%ifnarch %{ix86}
 %define build_vesa 0
 %endif
 
@@ -85,8 +65,6 @@
 # make EVR of plf build higher than regular to allow update, needed with rpm5 mkrel
 %define extrarelsuffix plf
 %endif
-%define build_twolame 1
-%define build_lame 1
 %define build_faac 1
 %define build_faad 1
 %define build_x264 1
@@ -124,12 +102,8 @@
 %{?_without_cdda: %{expand: %%global build_cdda 0}}
 %{?_with_dirac: %{expand: %%global build_dirac 1}}
 %{?_without_dirac: %{expand: %%global build_dirac 0}}
-%{?_with_dv: %{expand: %%global build_dv 1}}
-%{?_without_dv: %{expand: %%global build_dv 0}}
 %{?_with_sdl: %{expand: %%global build_sdl 1}}
 %{?_without_sdl: %{expand: %%global build_sdl 0}}
-%{?_with_lzo: %{expand: %%global build_lzo 1}}
-%{?_without_lzo: %{expand: %%global build_lzo 0}}
 %{?_with_mga: %{expand: %%global build_mga 1}}
 %{?_without_mga: %{expand: %%global build_mga 0}}
 %{?_with_fribidi: %{expand: %%global build_fribidi 1}}
@@ -146,10 +120,6 @@
 %{?_without_openal: %{expand: %%global build_openal 0}}
 %{?_with_schroedinger: %{expand: %%global build_schroedinger 1}}
 %{?_without_schroedinger: %{expand: %%global build_schroedinger 0}}
-%{?_with_twolame: %{expand: %%global build_twolame 1}}
-%{?_without_twolame: %{expand: %%global build_twolame 0}}
-%{?_with_lame: %{expand: %%global build_lame 1}}
-%{?_without_lame: %{expand: %%global build_lame 0}}
 %{?_with_faac: %{expand: %%global build_faac 1}}
 %{?_without_faac: %{expand: %%global build_faac 0}}
 %{?_with_faad: %{expand: %%global build_faad 1}}
@@ -171,11 +141,12 @@
 %{?_with_vpx: %{expand: %%global build_vpx 1}}
 %{?_without_vpx: %{expand: %%global build_vpx 0}}
 
-
-Name:		%{name}
-Version:	%{version}
-Release:	%{release}%{?extrarelsuffix}
-Summary:	%{Summary}
+%define Name	mplayer2
+Name:		mplayer2%{pkgext}
+Version:	2.0
+%define	gitdate	20120110
+Release:	1.%{gitdate}.1%{?extrarelsuffix}
+Summary:	Movie player for linux
 Source0:	%{name}-%{version}-%{gitdate}.tar.xz
 #gw default skin
 Source4:	Blue-1.5.tar.bz2
@@ -220,17 +191,11 @@ BuildRequires:	pkgconfig(dirac)  >= 0.9.0
 %if %build_schroedinger
 BuildRequires:	pkgconfig(schroedinger-1.0)
 %endif
-%if %build_dv
-BuildRequires:	pkgconfig(libdv)
-%endif
 BuildRequires:	libdxr3-devel
 BuildRequires:	jpeg-devel
 BuildRequires:	openjpeg-devel
 %if %build_lirc
 BuildRequires:	pkgconfig(liblircclient0)
-%endif
-%if %build_lzo
-BuildRequires:	liblzo-devel
 %endif
 BuildRequires:  pkgconfig(mad)
 BuildRequires:  nas-devel
@@ -238,7 +203,6 @@ BuildRequires:	pkgconfig(libpng15)
 %if %build_sdl
 BuildRequires:	pkgconfig(sdl) >= 1.1.8
 %endif
-BuildRequires:	termcap-devel
 %if %build_xmms
 BuildRequires:  xmms-devel
 %endif
@@ -248,9 +212,6 @@ BuildRequires:	libggiwmh-devel
 %if %build_smb
 # require samba < 3.2.0 to avoid shipping GPLv2 vs GPLv3
 BuildRequires:	libsmbclient-devel < 3.2.0
-%endif
-%if %build_twolame
-BuildRequires:	pkgconfig(twolame)
 %endif
 %if %build_faac
 BuildRequires:	libfaac-devel
@@ -266,9 +227,6 @@ BuildRequires:	xvid-devel >= 1.0.0-0.beta2.1plf
 %endif
 %if %build_dts
 BuildRequires:	pkgconfig(libdts)
-%endif
-%if %build_lame
-BuildRequires:	lame-devel
 %endif
 %if %build_live
 BuildRequires:	live-devel
@@ -332,7 +290,6 @@ BuildRequires:	pkgconfig(libbs2b)
 Suggests:	libfaac.so.0%{_ext}
 Suggests:	libfaad.so.2%{_ext}
 Suggests:	libx264.so.120%{_ext}
-Suggests:	libtwolame.so.0%{_ext}
 Suggests:	libdca.so.0%{_ext}
 Suggests:	libdvdcss.so.2%{_ext}
 
@@ -373,11 +330,11 @@ For non-free binary codecs support you should install the packages
 win32-codecs, real-codecs and xanim-codecs.
 %endif
 
-%package doc
-Summary: %{Name} documentation
-Group: Books/Computer books
+%package	doc
+Summary:	%{Name} documentation
+Group:		Books/Computer books
 
-%description doc
+%description	doc
 This package contains documentation for %{Name}.
 
 %prep
@@ -405,7 +362,7 @@ export CFLAGS="$CFLAGS -g"
 export CFLAGS="$CFLAGS -mcpu=7450 -maltivec"
 %endif
 %if %build_directfb
-export CPPFLAGS="-I%_includedir/directfb"
+export CPPFLAGS="-I%{_includedir}/directfb"
 %endif
 %if %{build_3264bit}
 export EXESUF=32
@@ -415,7 +372,7 @@ export LDFLAGS="%{?ldflags}"
 	--prefix=%{_prefix} \
 	--datadir=%{_datadir}/%{name} \
 	--confdir=%{_sysconfdir}/%{name} \
-	--libdir=%_libdir \
+	--libdir=%{_libdir} \
 %if !%build_optimization
 	--enable-runtime-cpudetection \
 %if !%build_dts
@@ -424,7 +381,7 @@ export LDFLAGS="%{?ldflags}"
 	--enable-libdca-dlopen \
 %endif
 %endif
-%ifarch %ix86
+%ifarch %{ix86}
         --enable-mmx \
         --enable-3dnow \
         --enable-sse \
@@ -517,12 +474,6 @@ export LDFLAGS="%{?ldflags}"
 %if ! %build_cdda
 	--disable-cdparanoia \
 %endif
-%if ! %build_dv
-	--disable-libdv \
-%endif
-%if ! %build_lzo
-	--disable-liblzo \
-%endif
 %if ! %build_sdl
 	--disable-sdl \
 %endif
@@ -552,11 +503,11 @@ export LDFLAGS="%{?ldflags}"
 # Keep this line before empty end %%configure (ppc conditionnal pb)
 make EXESUF=%{pkgext}
 #gw make sure we have our version string included:
-fgrep %release version.h
+fgrep %{release} version.h
 
 %install
-install -d -m 755 %{buildroot}%{_datadir}/%name
-install -d -m 755 %{buildroot}%{_sysconfdir}/%name
+install -d -m 755 %{buildroot}%{_datadir}/%{name}
+install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
 install -m755 mplayer%{pkgext} -D %{buildroot}%{_bindir}/mplayer%{pkgext}
 for lang in de fr hu pl es it zh_CN en; do
     install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer%{pkgext}.1
@@ -571,13 +522,12 @@ export DONT_STRIP=1
 
 %files -f mplayer%{pkgext}.lang
 %doc AUTHORS README Copyright
-%dir %{_sysconfdir}/%name
+%dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/%{name}/mplayer.conf
 %{_bindir}/mplayer%{pkgext}
 %{_mandir}/man1/mplayer%{pkgext}.1*
 %dir %{_datadir}/%{name}
 
 %files doc
-%defattr(-,root,root,755)
 %doc README.DOCS
 %doc DOCS/default.css DOCS/xml DOCS/tech/
