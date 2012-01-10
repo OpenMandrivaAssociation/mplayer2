@@ -1,136 +1,66 @@
-%define build_plf 0
-%define build_optimization 0
-%define build_debug 0
+%bcond_with	plf
+%bcond_with	optimization
+%bcond_with	debug
 
-%define build_yasm	1
-%define build_live	1
-%define build_vesa	1
-%define build_theora	1
-%define build_ggi	0
-%define build_lirc	1
-%define	build_xmms	0
-%define	build_arts	0
-%define build_aa	1
-%define build_cdda	1
-%define build_compiz	0
-%define build_dirac	1
-%define build_sdl	1
-%define build_smb	1
-%define build_mga	1
-%define build_fbdev	1
-%define build_dvb	1
-%define build_fribidi	1
-%define build_enca	1
-%define build_alsa	1
-%define build_jack	1
-%define build_openal	0
-%define build_pulse	1
-%define build_schroedinger	1
-%define build_faac 0
-%define build_faad 0
-%define build_x264 0
-%define build_xvid 0
-%define build_dts 0
-%define build_directfb 1
-%define build_v4l2 1
-%define build_vdpau 1
-%define build_ivtv 0
-%define build_libass 1
-%define build_vpx 1
-%define build_rtmp 1
+%bcond_without	yasm
+%bcond_without	live
+%bcond_without	vesa
+%bcond_without	theora
+%bcond_with	ggi
+%bcond_without	lirc
+%bcond_with	xmms
+%bcond_with	arts
+%bcond_without	aa
+%bcond_without	cdda
+%bcond_with	compiz
+%bcond_without	dirac
+%bcond_without	sdl
+%bcond_without	smb
+%bcond_without	mga
+%bcond_without	fbdev
+%bcond_without	dvb
+%bcond_without	fribidi
+%bcond_without	enca
+%bcond_without	alsa
+%bcond_without	jack
+%bcond_with	openal
+%bcond_without	pulse
+%bcond_without	schroedinger
+%bcond_with	faac
+%bcond_with	faad
+%bcond_with	x264
+%bcond_with	xvid
+%bcond_with	dts
+%bcond_without	directfb
+%bcond_without	v4l2
+%bcond_without	vdpau
+%bcond_with	ivtv
+%bcond_without	libass
+%bcond_without	vpx
+%bcond_without	rtmp
 
-%if %mdvver < 201100 && !%build_plf
-%define build_libass 0
-%define build_vpx 0
-%define build_rtmp 0
+%if %mdvver < 201100 && !%{with plf}
+%bcond_with	libass
+%bcond_with	vpx
+%bcond_with	rtmp
 %endif
 
 %ifnarch %{ix86}
-%define build_vesa 0
+%bcond_with	vesa
 %endif
 
-%{?_with_plf: %{expand: %%global build_plf 1}}
-%if %build_plf
+%if %{with plf}
 %define distsuffix plf
 %if %mdvver >= 201100
 # make EVR of plf build higher than regular to allow update, needed with rpm5 mkrel
 %define extrarelsuffix plf
 %endif
-%define build_faac 1
-%define build_faad 1
-%define build_x264 1
-%define build_xvid 1
-%define build_dts 1
-%define build_yasm 1
-%define build_dirac 1
-%define build_schroedinger 1
+%bcond_without	faac
+%bcond_without	faad
+%bcond_without	xvid
+%bcond_without	dts
+%bcond_without	x264
 %endif
-
-%{?_with_live: %{expand: %%global build_live 1}}
-%{?_without_live: %{expand: %%global build_live 0}}
-%{?_with_yasm: %{expand: %%global build_yasm 1}}
-%{?_without_yasm: %{expand: %%global build_yasm 0}}
-%{?_with_vesa: %{expand: %%global build_vesa 1}}
-%{?_without_vesa: %{expand: %%global build_vesa 0}}
-%{?_with_optimization: %{expand: %%global build_optimization 1}}
-%{?_with_debug: %{expand: %%global build_debug 1}}
-%{?_without_debug: %{expand: %%global build_debug 0}}
-%{?_with_theora: %{expand: %%global build_theora 1}}
-%{?_without_theora: %{expand: %%global build_theora 0}}
-%{?_with_smb: %{expand: %%global build_smb 1}}
-%{?_without_smb: %{expand: %%global build_smb 0}}
-%{?_with_ggi: %{expand: %%global build_ggi 1}}
-%{?_without_ggi: %{expand: %%global build_ggi 0}}
-%{?_with_lirc: %{expand: %%global build_lirc 1}}
-%{?_without_lirc: %{expand: %%global build_lirc 0}}
-%{?_with_xmms: %{expand: %%global build_xmms 1}}
-%{?_without_xmms: %{expand: %%global build_xmms 0}}
-%{?_with_arts: %{expand: %%global build_arts 1}}
-%{?_without_arts: %{expand: %%global build_arts 0}}
-%{?_with_aa: %{expand: %%global build_aa 1}}
-%{?_without_aa: %{expand: %%global build_aa 0}}
-%{?_with_cdda: %{expand: %%global build_cdda 1}}
-%{?_without_cdda: %{expand: %%global build_cdda 0}}
-%{?_with_dirac: %{expand: %%global build_dirac 1}}
-%{?_without_dirac: %{expand: %%global build_dirac 0}}
-%{?_with_sdl: %{expand: %%global build_sdl 1}}
-%{?_without_sdl: %{expand: %%global build_sdl 0}}
-%{?_with_mga: %{expand: %%global build_mga 1}}
-%{?_without_mga: %{expand: %%global build_mga 0}}
-%{?_with_fribidi: %{expand: %%global build_fribidi 1}}
-%{?_without_fribidi: %{expand: %%global build_fribidi 0}}
-%{?_with_enca: %{expand: %%global build_enca 1}}
-%{?_without_enca: %{expand: %%global build_enca 0}}
-%{?_with_jack: %{expand: %%global build_jack 1}}
-%{?_without_jack: %{expand: %%global build_jack 0}}
-%{?_with_libass: %{expand: %%global build_libass 1}}
-%{?_without_libass: %{expand: %%global build_libass 0}}
-%{?_with_pulse: %{expand: %%global build_pulse 1}}
-%{?_without_pulse: %{expand: %%global build_pulse 0}}
-%{?_with_openal: %{expand: %%global build_openal 1}}
-%{?_without_openal: %{expand: %%global build_openal 0}}
-%{?_with_schroedinger: %{expand: %%global build_schroedinger 1}}
-%{?_without_schroedinger: %{expand: %%global build_schroedinger 0}}
-%{?_with_faac: %{expand: %%global build_faac 1}}
-%{?_without_faac: %{expand: %%global build_faac 0}}
-%{?_with_faad: %{expand: %%global build_faad 1}}
-%{?_without_faad: %{expand: %%global build_faad 0}}
-%{?_with_x264: %{expand: %%global build_x264 1}}
-%{?_without_x264: %{expand: %%global build_x264 0}}
-%{?_with_xvid: %{expand: %%global build_xvid 1}}
-%{?_without_xvid: %{expand: %%global build_xvid 0}}
-%{?_with_dts: %{expand: %%global build_dts 1}}
-%{?_without_dts: %{expand: %%global build_dts 0}}
-%{?_with_directfb: %{expand: %%global build_directfb 1}}
-%{?_without_directfb: %{expand: %%global build_directfb 0}}
-%{?_with_rtmp: %{expand: %%global build_rtmp 1}}
-%{?_without_rtmp: %{expand: %%global build_rtmp 0}}
-%{?_with_v4l2: %{expand: %%global build_v4l2 1}}
-%{?_without_v4l2: %{expand: %%global build_v4l2 0}}
-%{?_with_vdpau: %{expand: %%global build_vdpau 1}}
-%{?_without_vdpau: %{expand: %%global build_vdpau 0}}
-%{?_with_vpx: %{expand: %%global build_vpx 1}}
-%{?_without_vpx: %{expand: %%global build_vpx 0}}
 
 Name:		mplayer2
 Version:	2.0
@@ -151,98 +81,98 @@ License:	GPLv3
 Group:		Video
 BuildRequires:	ffmpeg-devel >= 0.9.1
 BuildRequires:	pkgconfig(ncurses)
-%if %build_aa
+%if %{with aa}
 BuildRequires:	aalib-devel
 %endif
 BuildRequires:  a52dec-devel
-%if %build_arts
+%if %{with arts}
 BuildRequires:  arts-devel
 %endif
 
-%if %build_jack
+%if %{with jack}
 BuildRequires:  pkgconfig(jack)
 %endif
-%if %build_pulse
+%if %{with pulse}
 BuildRequires:  pkgconfig(libpulse)
 %endif
-%if %build_openal
+%if %{with openal}
 BuildRequires:  pkgconfig(openal)
 %endif
-%if %build_cdda
+%if %{with cdda}
 BuildRequires:	cdda-devel
 %endif
-%if %build_dirac
+%if %{with dirac}
 BuildRequires:	pkgconfig(dirac)  >= 0.9.0
 %endif
-%if %build_schroedinger
+%if %{with schroedinger}
 BuildRequires:	pkgconfig(schroedinger-1.0)
 %endif
 BuildRequires:	libdxr3-devel
 BuildRequires:	jpeg-devel
 BuildRequires:	openjpeg-devel
-%if %build_lirc
+%if %{with lirc}
 BuildRequires:	pkgconfig(liblircclient0)
 %endif
 BuildRequires:  pkgconfig(mad)
 BuildRequires:  nas-devel
 BuildRequires:	pkgconfig(libpng15)
-%if %build_sdl
+%if %{with sdl}
 BuildRequires:	pkgconfig(sdl) >= 1.1.8
 %endif
-%if %build_xmms
+%if %{with xmms}
 BuildRequires:  xmms-devel
 %endif
-%if %build_ggi
+%if %{with ggi}
 BuildRequires:	libggiwmh-devel
 %endif
-%if %build_smb
+%if %{with smb}
 BuildRequires:	libsmbclient-devel
 %endif
-%if %build_faac
+%if %{with faac}
 BuildRequires:	libfaac-devel
 %endif
-%if %build_faad
+%if %{with faad}
 BuildRequires:	libfaad2-devel
 %endif
-%if %build_x264
+%if %{with x264}
 BuildRequires:	pkgconfig(x264) >= 0.120
 %endif
-%if %build_xvid
+%if %{with xvid}
 BuildRequires:	xvid-devel >= 1.0.0-0.beta2.1plf
 %endif
-%if %build_dts
+%if %{with dts}
 BuildRequires:	pkgconfig(libdts)
 %endif
-%if %build_live
+%if %{with live}
 BuildRequires:	live-devel
 %endif
-%if %build_vesa
+%if %{with vesa}
 BuildRequires:	libvbe-devel liblrmi-devel
 %endif
-%if %build_theora
+%if %{with theora}
 BuildRequires:	pkgconfig(theora)
 %endif
-%if %build_fribidi
+%if %{with fribidi}
 BuildRequires:	pkgconfig(fribidi) >= 0.10.4
 %endif
-%if %build_enca
+%if %{with enca}
 BuildRequires:	pkgconfig(enca)
 %endif
-%if %build_directfb
+%if %{with directfb}
 BuildRequires:	pkgconfig(directfb)
 %endif
-%if %build_vdpau
+%if %{with vdpau}
 BuildRequires:	pkgconfig(vdpau)
 %endif
-%if %build_libass
+%if %{with libass}
 BuildRequires:	pkgconfig(libass)
 %endif
 BuildRequires:	gsm-devel
 BuildRequires:	pkgconfig(libmpg123)
-%if %build_vpx
+%if %{with vpx}
 BuildRequires:	pkgconfig(vpx)
 %endif
-%if %build_rtmp
+%if %{with rtmp}
 BuildRequires:	pkgconfig(librtmp)
 %endif
 BuildRequires:	bzip2-devel
@@ -263,7 +193,7 @@ BuildRequires:	giflib-devel
 %else
 BuildRequires:	ungif-devel
 %endif
-%if %build_yasm
+%if %{with yasm}
 BuildRequires:	yasm
 %endif
 BuildRequires:	pkgconfig(libbs2b)
@@ -305,7 +235,7 @@ english, czech, etc), cyrillic, korean fonts, and OSD?
 
 Note: If you want to play Real content, you need to have the content
 of RealPlayer's Codecs directory in %_libdir/codecs/
-%if %build_plf
+%if %{with plf}
 
 This package is in PLF because some included codecs are covered by
 patents.  It also includes support for reading DVDs encrypted with CSS
@@ -334,16 +264,16 @@ perl -pi -e 's^r\$git_revision^%{gitdate}^' version.sh
 mv DOCS/README README.DOCS
 
 %build
-%if !%build_optimization
+%if !%{with optimization}
 export CFLAGS="$CFLAGS $RPM_OPT_FLAGS"
 %endif
-%if %build_debug
+%if %{with debug}
 export CFLAGS="$CFLAGS -g"
 %endif
 %ifarch ppc
 export CFLAGS="$CFLAGS -mcpu=7450 -maltivec"
 %endif
-%if %build_directfb
+%if %{with directfb}
 export CPPFLAGS="-I%{_includedir}/directfb"
 %endif
 export LDFLAGS="%{?ldflags}"
@@ -352,9 +282,9 @@ export LDFLAGS="%{?ldflags}"
 	--datadir=%{_datadir}/%{name} \
 	--confdir=%{_sysconfdir}/%{name} \
 	--libdir=%{_libdir} \
-%if !%build_optimization
+%if !%{with optimization}
 	--enable-runtime-cpudetection \
-%if !%build_dts
+%if !%{with dts}
 	--disable-libdca \
 %if 0
 	--enable-libdca-dlopen \
@@ -370,111 +300,111 @@ export LDFLAGS="%{?ldflags}"
 %endif
 	--enable-freetype \
 	--enable-nas \
-%if %build_debug
+%if %{with debug}
 	--enable-debug=3 \
 %else
 	--disable-sighandler \
 %endif
 	--language=all \
 	\
-%if ! %build_faad
+%if ! %{with faad}
 	--disable-faad \
 %if 0
 	--enable-faad-dlopen \
 %endif
 %endif
 %if 0
-#!%build_faac
+#!%{with faac}
 	--enable-faac-dlopen \
 %endif
 %if 0
-#!%build_x264
+#!%{with x264}
 	--enable-x264-dlopen \
 %endif
 	--disable-libdvdcss-internal \
-%if %build_lirc
+%if %{with lirc}
 	--enable-lirc \
 %else
 	--disable-lirc \
 %endif
 	--enable-tv \
-%if ! %build_v4l2
+%if ! %{with v4l2}
 	--disable-tv-v4l2 \
 %endif
 	--enable-joystick \
 	\
 	--enable-gl \
         --disable-svga \
-%if ! %build_mga
+%if ! %{with mga}
 	--disable-mga \
 %endif
-%if ! %build_fbdev
+%if ! %{with fbdev}
 	--disable-fbdev \
 %endif
-%if %build_directfb
+%if %{with directfb}
        --enable-directfb \
 %else
        --disable-directfb \
 %endif
-%if ! %build_live
+%if ! %{with live}
 	--disable-live \
 %endif
-%if ! %build_vesa
+%if ! %{with vesa}
        --disable-vesa \
 %endif
-%if %build_theora
+%if %{with theora}
 	--enable-theora \
 %else
 	--disable-theora \
 %endif
-%if %build_xmms
+%if %{with xmms}
 	--enable-xmms --with-xmmslibdir=%{_libdir} \
 %endif
-%if %build_smb
+%if %{with smb}
 	--enable-smb \
 %endif
-%if ! %build_dvb
+%if ! %{with dvb}
        --disable-dvb \
        --disable-dvbhead \
 %endif
-%if ! %build_ggi
+%if ! %{with ggi}
 	--disable-ggi \
 %endif
 	--codecsdir=%{_libdir}/codecs \
-%if ! %build_arts
+%if ! %{with arts}
 	--disable-arts \
 %endif
-%if ! %build_jack
+%if ! %{with jack}
 	--disable-jack \
 %endif
-%if ! %build_aa
+%if ! %{with aa}
 	--disable-aa \
 %endif
-%if ! %build_cdda
+%if ! %{with cdda}
 	--disable-cdparanoia \
 %endif
-%if ! %build_sdl
+%if ! %{with sdl}
 	--disable-sdl \
 %endif
-%if ! %build_alsa
+%if ! %{with alsa}
 	--disable-alsa \
 %endif
-%if ! %build_fribidi
+%if ! %{with fribidi}
 	--disable-fribidi \
 %endif
-%if !%build_enca
+%if !%{with enca}
 	--disable-enca \
 %endif
-%if %build_pulse
+%if %{with pulse}
 	--enable-pulse \
 %endif
-%if !%build_openal
+%if !%{with openal}
 	--disable-openal \
 %endif
-%if ! %build_ivtv
+%if ! %{with ivtv}
 	--disable-ivtv \
 %endif
-%if ! %build_vdpau
+%if ! %{with vdpau}
 	--disable-vdpau \
 %endif
 
@@ -495,7 +425,7 @@ done
 
 install -m 644 etc/example.conf %{buildroot}%{_sysconfdir}/%{name}/mplayer.conf
 
-%if %build_debug
+%if %{with debug}
 export DONT_STRIP=1
 %endif
 
