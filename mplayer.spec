@@ -297,6 +297,10 @@ export LDFLAGS="%{?ldflags}"
 	--disable-faad \
 	--enable-faad-dlopen \
 %endif
+%if ! %{with xvid}
+	--disable-xvid \
+	--enable-xvid-dlopen \
+%endif
 	--disable-libdvdcss-internal \
 %if %{with lirc}
 	--enable-lirc \
