@@ -1,4 +1,4 @@
-%bcond_withoout	dlopen
+%bcond_without	dlopen
 %bcond_with	optimization
 %bcond_with	debug
 
