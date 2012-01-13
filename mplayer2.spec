@@ -66,7 +66,7 @@ Source5:	kernel-version.sh
 Patch0:		mplayer-mdvconfig.patch
 # fixes for crashes found while fixing CVE-2008-1558
 Patch28:	mplayer-rtsp-extra-fixes.patch
-Patch39:	mplayer2-20120110-dlopen-libfaad-and-libdca.patch
+Patch39:	mplayer2-20120110-dlopen-libfaad-libdca-and-libxvidcore.patch
 Patch40:	mplayer2-20120110-fix-required-libpostproc-version.patch
 URL:		http://www.mplayerhq.hu
 License:	GPLv3
