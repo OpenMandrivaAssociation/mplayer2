@@ -298,7 +298,6 @@ export LDFLAGS="%{?ldflags}"
 	--disable-tv-v4l2 \
 %endif
 	--enable-joystick \
-	\
 	--enable-gl \
         --disable-svga \
 %if ! %{with mga}
