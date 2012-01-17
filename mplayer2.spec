@@ -184,6 +184,7 @@ BuildRequires:	yasm
 %endif
 BuildRequires:	pkgconfig(libbs2b)
 BuildRequires:	pkgconfig(dvdread)
+BuildRequires:	pkgconfig(dvdnavmini)
 
 %if "%{_lib}" == "lib64"
 %global	_ext	()(64bit)
@@ -373,6 +374,8 @@ export LDFLAGS="%{?ldflags}"
 %if ! %{with vdpau}
 	--disable-vdpau \
 %endif
+	--enable-dvdnav \
+	--disable-dvdread-internal \
 	--enable-dvdread
 
 %make
