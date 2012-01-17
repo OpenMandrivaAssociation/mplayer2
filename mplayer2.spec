@@ -57,7 +57,7 @@
 Name:		mplayer2
 Version:	2.0
 %define	gitdate	20120110
-Release:	1.%{gitdate}.2
+Release:	1.%{gitdate}.3
 Summary:	Movie player for linux
 Source0:	%{name}-%{version}-%{gitdate}.tar.xz
 #gw default skin
@@ -195,7 +195,7 @@ Suggests:	libfaad.so.2%{_ext}
 Suggests:	libdca.so.0%{_ext}
 
 %rename		mplayer1.0
-%rename		mplayer
+Provides:	mplayer
 Conflicts:	mplayer-gui
 # we might wanna allow for mencoder to still be packaged..
 #Conflicts:	mencoder
