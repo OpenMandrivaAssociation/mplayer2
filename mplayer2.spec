@@ -224,6 +224,7 @@ of RealPlayer's Codecs directory in %{_libdir}/codecs/
 %package	doc
 Summary:	%{name} documentation
 Group:		Books/Computer books
+BuildArch:	noarch
 
 %description	doc
 This package contains documentation for %{name}.
