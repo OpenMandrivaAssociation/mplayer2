@@ -57,7 +57,7 @@
 Name:		mplayer2
 Version:	2.0
 %define	gitdate	20120110
-Release:	1.%{gitdate}.3
+Release:	1.%{gitdate}.1
 Summary:	Movie player for linux
 Source0:	%{name}-%{version}-%{gitdate}.tar.xz
 #gw default skin
