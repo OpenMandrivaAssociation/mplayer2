@@ -273,7 +273,6 @@ export LDFLAGS="%{?ldflags}"
 	--disable-libdca \
 	--enable-libdca-dlopen \
 %endif
-	--enable-freetype \
 	--enable-nas \
 %if %{with debug}
 	--enable-debug=3 \
@@ -319,9 +318,7 @@ export LDFLAGS="%{?ldflags}"
 %if ! %{with vesa}
        --disable-vesa \
 %endif
-%if %{with theora}
-	--enable-theora \
-%else
+%if %{!with theora}
 	--disable-theora \
 %endif
 %if %{with xmms}
@@ -362,8 +359,8 @@ export LDFLAGS="%{?ldflags}"
 %if !%{with enca}
 	--disable-enca \
 %endif
-%if %{with pulse}
-	--enable-pulse \
+%if %{!with pulse}
+	--disable-pulse \
 %endif
 %if !%{with openal}
 	--disable-openal \
