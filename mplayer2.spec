@@ -190,9 +190,9 @@ BuildRequires:	pkgconfig(dvdnavmini)
 Suggests:	libfaad.so.2%{_ext}
 Suggests:	libdca.so.0%{_ext}
 
-%rename		mplayer1.0
-Provides:	mplayer
-Conflicts:	mplayer-gui
+#%rename		mplayer1.0
+#Provides:	mplayer
+#Conflicts:	mplayer-gui
 # we might wanna allow for mencoder to still be packaged..
 #Conflicts:	mencoder
 
