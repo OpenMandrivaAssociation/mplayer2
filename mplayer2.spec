@@ -8,7 +8,6 @@
 %bcond_with	ggi
 %bcond_without	lirc
 %bcond_with	xmms
-%bcond_with	arts
 %bcond_without	aa
 %bcond_without	cdda
 %bcond_with	compiz
@@ -56,7 +55,7 @@
 
 Name:		mplayer2
 Version:	2.0
-%define	gitdate	20120503
+%define	gitdate	20120605
 Release:	1.%{gitdate}.1
 Summary:	Movie player for linux
 Source0:	%{name}-%{version}-%{gitdate}.tar.xz
@@ -66,7 +65,7 @@ Source5:	kernel-version.sh
 Patch0:		mplayer-mdvconfig.patch
 # fixes for crashes found while fixing CVE-2008-1558
 Patch28:	mplayer-rtsp-extra-fixes.patch
-Patch39:	mplayer2-20120517-dlopen-libfaad-libdca-and-libxvidcore.patch
+Patch39:	mplayer2-20120605-dlopen-libfaad-libdca-and-libxvidcore.patch
 Patch40:	mplayer2-20120110-fix-required-libpostproc-version.patch
 URL:		http://www.mplayer2.org
 License:	GPLv3
@@ -77,9 +76,6 @@ BuildRequires:	pkgconfig(ncurses)
 BuildRequires:	aalib-devel
 %endif
 BuildRequires:	a52dec-devel
-%if %{with arts}
-BuildRequires:	arts-devel
-%endif
 
 %if %{with jack}
 BuildRequires:	pkgconfig(jack)
@@ -335,9 +331,6 @@ export LDFLAGS="%{?ldflags}"
 	--disable-ggi \
 %endif
 	--codecsdir=%{_libdir}/codecs \
-%if ! %{with arts}
-	--disable-arts \
-%endif
 %if ! %{with jack}
 	--disable-jack \
 %endif
