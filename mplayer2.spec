@@ -252,8 +252,6 @@ export CFLAGS="%{optflags}"
 export LDFLAGS="%{?ldflags}"
 ./configure \
 	--prefix=%{_prefix} \
-	--datadir=%{_datadir}/mplayer \
-	--confdir=%{_sysconfdir}/mplayer \
 	--libdir=%{_libdir} \
 %if !%{with optimization}
 	--enable-runtime-cpudetection \
@@ -371,27 +369,20 @@ export LDFLAGS="%{?ldflags}"
 %make
 
 %install
-install -d -m 755 %{buildroot}%{_datadir}/mplayer
-install -d -m 755 %{buildroot}%{_sysconfdir}/mplayer
-install -m755 mplayer -D %{buildroot}%{_bindir}/mplayer
+install -m755 mplayer -D %{buildroot}%{_bindir}/mplayer2
+install -m644 etc/example.conf -D %{buildroot}%{_sysconfdir}/mplayer2/mplayer2.conf
+
 for lang in de fr hu pl es it zh_CN en; do
-    install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer.1
+    install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer2.1
 done 
-%find_lang mplayer --with-man
+%find_lang mplayer2 --with-man
 
-install -m 644 etc/example.conf %{buildroot}%{_sysconfdir}/mplayer/mplayer.conf
-
-%if %{with debug}
-export DONT_STRIP=1
-%endif
-
-%files -f mplayer.lang
+%files -f mplayer2.lang
 %doc AUTHORS README Copyright
-%dir %{_sysconfdir}/mplayer
-%config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/mplayer/mplayer.conf
-%{_bindir}/mplayer
-%{_mandir}/man1/mplayer.1*
-%dir %{_datadir}/mplayer
+%dir %{_sysconfdir}/mplayer2
+%config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/mplayer2/mplayer2.conf
+%{_bindir}/mplayer2
+%{_mandir}/man1/mplayer2.1*
 
 %files doc
 %doc README.DOCS
