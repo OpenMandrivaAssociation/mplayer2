@@ -256,11 +256,11 @@ export LDFLAGS="%{?ldflags}"
 %if !%{with optimization}
 	--enable-runtime-cpudetection \
 %ifarch %{ix86}
-        --enable-mmx \
-        --enable-3dnow \
-        --enable-sse \
-        --enable-sse2 \
-        --enable-fastmemcpy \
+	--enable-mmx \
+	--enable-3dnow \
+	--enable-sse \
+	--enable-sse2 \
+	--enable-fastmemcpy \
 %endif
 %endif
 %if !%{with dts}
@@ -294,7 +294,7 @@ export LDFLAGS="%{?ldflags}"
 %endif
 	--enable-joystick \
 	--enable-gl \
-        --disable-svga \
+	--disable-svga \
 %if ! %{with mga}
 	--disable-mga \
 %endif
@@ -302,28 +302,29 @@ export LDFLAGS="%{?ldflags}"
 	--disable-fbdev \
 %endif
 %if %{with directfb}
-       --enable-directfb \
+	--enable-directfb \
 %else
-       --disable-directfb \
+	--disable-directfb \
 %endif
 %if ! %{with live}
 	--disable-live \
 %endif
 %if ! %{with vesa}
-       --disable-vesa \
+	--disable-vesa \
 %endif
 %if %{!with theora}
 	--disable-theora \
 %endif
 %if %{with xmms}
-	--enable-xmms --with-xmmslibdir=%{_libdir} \
+	--enable-xmms \
+	--with-xmmslibdir=%{_libdir} \
 %endif
 %if %{with smb}
 	--enable-smb \
 %endif
 %if ! %{with dvb}
-       --disable-dvb \
-       --disable-dvbhead \
+	--disable-dvb \
+	--disable-dvbhead \
 %endif
 %if ! %{with ggi}
 	--disable-ggi \
@@ -373,7 +374,7 @@ install -m755 mplayer -D %{buildroot}%{_bindir}/mplayer2
 install -m644 etc/example.conf -D %{buildroot}%{_sysconfdir}/mplayer2/mplayer2.conf
 
 for lang in de fr hu pl es it zh_CN en; do
-    install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer2.1
+	install -m644 DOCS/man/$lang/mplayer.1 -D %{buildroot}%{_mandir}/$([ "$lang" != "en" ] && echo $lang)/man1/mplayer2.1
 done 
 %find_lang mplayer2 --with-man
 
