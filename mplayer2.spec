@@ -56,7 +56,7 @@
 Name:		mplayer2
 Version:	2.0
 %define	gitdate	20120605
-Release:	1.%{gitdate}.1
+Release:	1.%{gitdate}.2
 Summary:	Movie player for linux
 Source0:	%{name}-%{version}-%{gitdate}.tar.xz
 #gw default skin
@@ -351,7 +351,9 @@ export LDFLAGS="%{?ldflags}"
 %if !%{with enca}
 	--disable-enca \
 %endif
-%if %{!with pulse}
+%if %{with pulse}
+	--enable-pulse \
+%else
 	--disable-pulse \
 %endif
 %if !%{with openal}
