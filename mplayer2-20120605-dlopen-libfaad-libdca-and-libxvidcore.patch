@@ -1,0 +1,1647 @@
+--- mplayer2-2.0/configure.dlopen~	2012-05-17 16:38:00.000000000 +0200
++++ mplayer2-2.0/configure	2012-06-05 12:28:15.320301250 +0200
+@@ -609,7 +609,9 @@ _theora=auto
+ _mpg123=auto
+ _liba52=auto
+ _libdca=auto
++_libdca_dlopen=no
+ _faad=auto
++_faad_dlopen=no
+ _ladspa=auto
+ _libbs2b=auto
+ _xmms=no
+@@ -939,10 +941,14 @@ for ac_option do
+   --disable-liba52)     _liba52=no      ;;
+   --enable-libdca)      _libdca=yes     ;;
+   --disable-libdca)     _libdca=no      ;;
++  --enable-libdca-dlopen)         _libdca_dlopen=yes        ;;
++  --disable-libdca-dlopen)        _libdca_dlopen=no         ;;
+   --enable-musepack)    _musepack=yes   ;;
+   --disable-musepack)   _musepack=no    ;;
+   --enable-faad)        _faad=yes       ;;
+   --disable-faad)       _faad=no        ;;
++  --enable-faad-dlopen)         _faad_dlopen=yes        ;;
++  --disable-faad-dlopen)        _faad_dlopen=no         ;;
+   --enable-ladspa)      _ladspa=yes     ;;
+   --disable-ladspa)     _ladspa=no      ;;
+   --enable-libbs2b)     _libbs2b=yes    ;;
+@@ -1017,6 +1023,8 @@ for ac_option do
+   --disable-joystick)   _joystick=no    ;;
+   --enable-xvid)        _xvid=yes       ;;
+   --disable-xvid)       _xvid=no        ;;
++  --enable-xvid-dlopen)        _xvid_dlopen=yes       ;;
++  --disable-xvid-dlopen)       _xvid_dlopen=no        ;;
+   --enable-libnut)      _libnut=yes     ;;
+   --disable-libnut)     _libnut=no      ;;
+   --enable-libav)       ffmpeg=yes      ;;
+@@ -5372,7 +5380,13 @@ if test "$_libdca" = auto ; then
+       extra_ldflags="$extra_ldflags $_ld_dca" && _libdca=yes && break
+   done
+ fi
+-if test "$_libdca" = yes ; then
++if test "$_libdca_dlopen" = yes ; then
++  def_libdca="#define CONFIG_LIBDCA 1"
++  def_libdca_dlopen="#define CONFIG_LIBDCA_DLOPEN 1"
++  _libdca=yes
++  _libdca_dlopen=yes
++  codecmodules="libdca $codecmodules"
++elif test "$_libdca" = yes ; then
+   def_libdca='#define CONFIG_LIBDCA 1'
+   codecmodules="libdca $codecmodules"
+ else
+@@ -5423,7 +5437,17 @@ EOF
+ fi
+ 
+ def_faad='#undef CONFIG_FAAD'
+-if test "$_faad" = yes ; then
++def_faad_dlopen='#undef CONFIG_FAAD_DLOPEN'
++if test "$_faad_dlopen" = yes ; then
++  def_faad="#define CONFIG_FAAD 1"
++  def_faad_dlopen="#define CONFIG_FAAD_DLOPEN 1"
++  _faad=yes
++  _faad_dlopen=yes
++else
++  def_faad_dlopen="#undef CONFIG_FAAD_DLOPEN"
++fi
++
++if test "$_faad" = yes && test "$_faad_dlopen" == no; then
+   def_faad='#define CONFIG_FAAD 1'
+   extra_ldflags="$extra_ldflags -lfaad"
+   codecmodules="faad2 $codecmodules"
+@@ -5681,7 +5705,13 @@ if test "$_xvid" = auto ; then
+   done
+ fi
+ 
+-if test "$_xvid" = yes ; then
++if test "$_xvid_dlopen" = yes ; then
++  _xvid=yes
++  _xvid_dlopen=yes
++  def_xvid='#define CONFIG_XVID4 1'
++  def_xvid_dlopen='#define CONFIG_XVID4_DLOPEN 1'
++  codecmodules="xvid $codecmodules"
++elif test "$_xvid" = yes ; then
+   def_xvid='#define CONFIG_XVID4 1'
+   codecmodules="xvid $codecmodules"
+ else
+@@ -6305,6 +6335,7 @@ DVDREAD = $_dvdread
+ DVDREAD_INTERNAL = $_dvdread_internal
+ DXR3 = $_dxr3
+ FAAD = $_faad
++FAAD_DLOPEN = $_faad_dlopen
+ FASTMEMCPY = $_fastmemcpy
+ FBDEV = $_fbdev
+ FREETYPE = $_freetype
+@@ -6328,6 +6359,7 @@ LIBASS = $_ass
+ LIBBLURAY = $_bluray
+ LIBBS2B = $_libbs2b
+ LIBDCA = $_libdca
++LIBDCA_DLOPEN = $_libdca_dlopen
+ LIBDV = $_libdv
+ LIBDVDCSS_INTERNAL = $_libdvdcss_internal
+ LIBMAD = $_mad
+@@ -6395,6 +6427,7 @@ XMGA = $_xmga
+ XMMS_PLUGINS = $_xmms
+ XV = $_xv
+ XVID4 = $_xvid
++XVID4_DLOPEN = $_xvid_dlopen
+ XVR100 = $_xvr100
+ YUV4MPEG = $_yuv4mpeg
+ 
+@@ -6588,8 +6621,10 @@ $def_vcd
+ 
+ /* codec libraries */
+ $def_faad
++$def_faad_dlopen
+ $def_liba52
+ $def_libdca
++$def_libdca_dlopen
+ $def_libdv
+ $def_mad
+ $def_mpg123
+@@ -6599,6 +6634,7 @@ $def_theora
+ $def_tremor
+ $def_vorbis
+ $def_xvid
++$def_xvid_dlopen
+ $def_zlib
+ 
+ $def_libpostproc
+--- mplayer2-2.0/libmpcodecs/ad_faad.c.dlopen~	2012-05-17 16:38:00.000000000 +0200
++++ mplayer2-2.0/libmpcodecs/ad_faad.c	2012-06-05 12:27:10.143116078 +0200
+@@ -23,13 +23,106 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+-#include <faad.h>
+ 
+ #include "config.h"
+ #include "options.h"
+ #include "ad_internal.h"
+ #include "libaf/reorder_ch.h"
+ 
++#ifdef CONFIG_FAAD_DLOPEN
++#include "../localinc/neaacdec.h"
++#include "../localinc/dlopen.h"
++
++static NeAACDecHandle (*dl_NeAACDecOpen) (void);
++static NeAACDecConfigurationPtr (*dl_NeAACDecGetCurrentConfiguration) (NeAACDecHandle hDecoder);
++static NeAACDecConfigurationPtr (*dl_NeAACDecGetCurrentConfiguration) (NeAACDecHandle hDecoder);
++static char (*dl_NeAACDecInit2) (NeAACDecHandle hDecoder,
++                               unsigned char *pBuffer,
++                               unsigned long SizeOfDecoderSpecificInfo,
++                               unsigned long *samplerate,
++                               unsigned char *channels);
++static unsigned char (*dl_NeAACDecSetConfiguration) (NeAACDecHandle hDecoder,
++                                                   NeAACDecConfigurationPtr config);
++static long (*dl_NeAACDecInit) (NeAACDecHandle hDecoder,
++                              unsigned char *buffer,
++                              unsigned long buffer_size,
++                              unsigned long *samplerate,
++                              unsigned char *channels);
++static void (*dl_NeAACDecClose) (NeAACDecHandle hDecoder);
++static void* (*dl_NeAACDecDecode) (NeAACDecHandle hDecoder,
++                                 NeAACDecFrameInfo *hInfo,
++                                 unsigned char *buffer,
++                                 unsigned long buffer_size);
++static char* (*dl_NeAACDecGetErrorMessage) (unsigned char errcode);
++#define NeAACDecOpen			dl_NeAACDecOpen
++#define NeAACDecGetCurrentConfiguration	dl_NeAACDecGetCurrentConfiguration
++#define	NeAACDecInit2			dl_NeAACDecInit2
++#define	NeAACDecGetCurrentConfiguration	dl_NeAACDecGetCurrentConfiguration
++#define	NeAACDecSetConfiguration	dl_NeAACDecSetConfiguration
++#define	NeAACDecInit			dl_NeAACDecInit
++#define	NeAACDecClose			dl_NeAACDecClose
++#define	NeAACDecDecode			dl_NeAACDecDecode
++#define	NeAACDecGetErrorMessage		dl_NeAACDecGetErrorMessage
++#define	FAAD_LIB			"libfaad.so.2"
++
++static int loadLibFAAD() {
++    void *libfaad = NULL;
++    const char *err = NULL;
++
++    libfaad = dlopen(FAAD_LIB, RTLD_LAZY);
++    if ((err = dlerror())) {
++	mp_msg(MSGT_OSDEP, MSGL_FATAL, "%s\n%s is missing, faad support will be disabled\n", err, FAAD_LIB);
++
++	if (libfaad)
++	    dlclose(libfaad);
++	return 1;
++    }
++
++  dl_sym(NeAACDecOpen, (NeAACDecHandle (*) (void)), libfaad);
++
++  dl_sym(NeAACDecGetCurrentConfiguration, (NeAACDecConfigurationPtr (*) (NeAACDecHandle hDecoder)), libfaad);
++
++  dl_sym(NeAACDecGetCurrentConfiguration, (NeAACDecConfigurationPtr (*) (NeAACDecHandle hDecoder)), libfaad);
++
++  dl_sym(NeAACDecInit2, (char (*) (NeAACDecHandle hDecoder,
++			  unsigned char *pBuffer,
++			  unsigned long SizeOfDecoderSpecificInfo,
++			  unsigned long *samplerate,
++			  unsigned char *channels)), libfaad);
++
++  dl_sym(NeAACDecSetConfiguration, (unsigned char (*) (NeAACDecHandle hDecoder,
++			  NeAACDecConfigurationPtr config)), libfaad);
++
++  dl_sym(NeAACDecInit, (long (*) (NeAACDecHandle hDecoder,
++			  unsigned char *buffer,
++			  unsigned long buffer_size,
++			  unsigned long *samplerate,
++			  unsigned char *channels)), libfaad);
++
++  dl_sym(NeAACDecClose, (void (*) (NeAACDecHandle hDecoder)), libfaad);
++
++  dl_sym(NeAACDecDecode, (void* (*) (NeAACDecHandle hDecoder,
++			  NeAACDecFrameInfo *hInfo,
++			  unsigned char *buffer,
++			  unsigned long buffer_size)), libfaad);
++  dl_sym(NeAACDecGetErrorMessage, (char * (*) (unsigned char errcode)), libfaad);
++
++  return 0;
++
++error:
++  mp_msg(MSGT_OSDEP, MSGL_FATAL, "libfaad: Missing symbols in %s: %s\n "
++	  "faad support disabled\n", FAAD_LIB, err);
++  dlclose(libfaad);
++
++  return 1;
++}
++#else
++#include <neaacdec.h>
++#endif
++
++#include "ad_internal.h"
++#include "libaf/reorder_ch.h"
++
+ static const ad_info_t info =
+ {
+ 	"AAC (MPEG2/4 Advanced Audio Coding)",
+@@ -83,6 +176,12 @@ static int init(sh_audio_t *sh)
+   unsigned long faac_samplerate;
+   unsigned char faac_channels;
+   int faac_init, pos = 0;
++
++#if CONFIG_FAAD_DLOPEN
++  if (loadLibFAAD())
++      return 0;
++#endif
++
+   faac_hdec = faacDecOpen();
+ 
+   // If we don't get the ES descriptor, try manual config
+--- mplayer2-2.0/libmpcodecs/ad_libdca.c.dlopen~	2012-05-17 16:38:00.000000000 +0200
++++ mplayer2-2.0/libmpcodecs/ad_libdca.c	2012-06-05 12:27:10.144116065 +0200
+@@ -31,7 +31,76 @@
+ #include "mp_msg.h"
+ #include "ad_internal.h"
+ 
++#ifndef CONFIG_LIBDCA_DLOPEN
+ #include <dts.h>
++#else
++#include "localinc/dts.h"
++#include <dlfcn.h>
++
++static dca_state_t * (*dl_dca_init) (uint32_t mm_accel);
++static int (*dl_dca_syncinfo) (dca_state_t *state, uint8_t * buf, int * flags,
++                  int * sample_rate, int * bit_rate, int *frame_length);
++static int (*dl_dca_frame) (dca_state_t * state, uint8_t * buf, int * flags,
++               level_t * level, sample_t bias);
++static int (*dl_dca_blocks_num) (dca_state_t * state);
++static int (*dl_dca_block) (dca_state_t * state);
++static sample_t * (*dl_dca_samples) (dca_state_t * state);
++static void (*dl_dca_free) (dca_state_t * state);
++
++#define	dca_init	dl_dca_init
++#define dca_syncinfo	dl_dca_syncinfo
++#define	dca_frame	dl_dca_frame
++#define	dca_blocks_num	dl_dca_blocks_num
++#define	dca_block	dl_dca_block
++#define	dca_samples	dl_dca_samples
++#define	dca_free	dl_dca_free
++
++#define	DCA_LIB		"libdca.so.0"
++
++#define dl_sym(func, args, lib) \
++	dl_##func = args dlsym(lib, #func); \
++	if ((err = dlerror())) \
++		goto error;
++
++static int loadLibDCA() {
++    void *libdca = NULL;
++    const char *err = NULL;
++
++    libdca = dlopen(DCA_LIB, RTLD_LAZY);
++    if ((err = dlerror())) {
++        mp_msg(MSGT_OSDEP, MSGL_FATAL, "%s\n%s is missing, dca support will be disabled\n", err, DCA_LIB);
++	if (libdca)
++	    dlclose(libdca);
++	return 1;
++    }
++
++    dl_sym(dca_init, (dca_state_t * (*) (uint32_t mm_accel)), libdca);
++
++    dl_sym(dca_syncinfo, (int (*) (dca_state_t *state, uint8_t * buf, int * flags,
++                  int * sample_rate, int * bit_rate, int *frame_length)), libdca);
++
++    dl_sym(dca_frame, (int (*) (dca_state_t * state, uint8_t * buf, int * flags,
++               level_t * level, sample_t bias)), libdca);
++
++    dl_sym(dca_blocks_num, (int (*) (dca_state_t * state)), libdca);
++
++    dl_sym(dca_block, (int (*) (dca_state_t * state)), libdca);
++
++    dl_sym(dca_samples, (sample_t* (*) (dca_state_t * state)), libdca);
++
++    dl_sym(dca_free, (void (*) (dca_state_t * state)), libdca);
++
++    return 0;
++
++error:
++    mp_msg(MSGT_OSDEP, MSGL_FATAL, "libdca: Missing symbols in %s: %s\n "
++	  "dca support disabled\n", DCA_LIB, err);
++    dlclose(libdca);
++    return 1;
++
++}
++#endif
++
+ 
+ static const ad_info_t info =
+ {
+@@ -301,6 +370,11 @@ static int init(sh_audio_t *sh)
+     int flags;
+     int decoded_bytes;
+ 
++#ifdef CONFIG_LIBDCA_DLOPEN
++    if(loadLibDCA())
++	return 0;
++#endif
++
+     s = dts_init(0);
+     if(s == NULL) {
+         mp_msg(MSGT_DECAUDIO, MSGL_ERR, "dts_init() failed\n");
+--- mplayer2-2.0/libmpcodecs/vd_xvid4.c.dlopen~	2012-05-17 16:38:00.000000000 +0200
++++ mplayer2-2.0/libmpcodecs/vd_xvid4.c	2012-06-05 12:27:10.144116065 +0200
+@@ -34,7 +34,46 @@
+ #include "vd_internal.h"
+ #include "m_option.h"
+ 
++#ifdef CONFIG_XVID4_DLOPEN
++#include "../localinc/xvid.h"
++#include "../localinc/dlopen.h"
++
++static int (*dl_xvid_decore) (void *handle, int opt, void *param1, void *param2);
++static int (*dl_xvid_global) (void *handle, int opt, void *param1, void *param2);
++
++#define	xvid_decore	dl_xvid_decore
++#define	xvid_global	dl_xvid_global
++#define	XVID4_LIB	"libxvidcore.so.4"
++
++static int loadLibXVID4() {
++    void *libxvid4 = NULL;
++    const char *err = NULL;
++
++    libxvid4 = dlopen(XVID4_LIB, RTLD_LAZY);
++    if ((err = dlerror())) {
++	mp_msg(MSGT_OSDEP, MSGL_FATAL, "%s\n%s is missing, xvid support will be disabled\n", err, XVID4_LIB);
++
++	if (libxvid4)
++	    dlclose(libxvid4);
++	return 1;
++    }
++
++  dl_sym(xvid_decore, (int (*) (void *handle, int opt, void *param1, void *param2)), libxvid4);
++
++  dl_sym(xvid_global, (int (*) (void *handle, int opt, void *param1, void *param2)), libxvid4);
++
++  return 0;
++
++error:
++  mp_msg(MSGT_OSDEP, MSGL_FATAL, "xvid: Missing symbols in %s: %s\n "
++	  "xvid support disabled\n", XVID4_LIB, err);
++  dlclose(libxvid4);
++
++  return 1;
++}
++#else
+ #include <xvid.h>
++#endif
+ 
+ /*****************************************************************************
+  * Configuration options
+--- mplayer2-2.0/localinc/dca.h.dlopen~	2012-06-05 12:27:10.145116052 +0200
++++ mplayer2-2.0/localinc/dca.h	2012-06-05 12:27:10.145116052 +0200
+@@ -0,0 +1,86 @@
++/*
++ * dca.h
++ * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
++ *
++ * This file is part of libdca, a free DTS Coherent Acoustics stream decoder.
++ * See http://www.videolan.org/developers/libdca.html for updates.
++ *
++ * libdca is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * libdca is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the
++ * Free Software Foundation, Inc.,
++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++#ifndef LIBDCA_DCA_H
++#define LIBDCA_DCA_H
++
++/* x86 accelerations */
++#define MM_ACCEL_X86_MMX	0x80000000
++#define MM_ACCEL_X86_3DNOW	0x40000000
++#define MM_ACCEL_X86_MMXEXT	0x20000000
++
++uint32_t mm_accel (void);
++
++#if defined(LIBDCA_FIXED)
++typedef int32_t sample_t;
++typedef int32_t level_t;
++#elif defined(LIBDCA_DOUBLE)
++typedef double sample_t;
++typedef double level_t;
++#else
++typedef float sample_t;
++typedef float level_t;
++#endif
++
++typedef struct dca_state_s dca_state_t;
++
++#define DCA_MONO 0
++#define DCA_CHANNEL 1
++#define DCA_STEREO 2
++#define DCA_STEREO_SUMDIFF 3
++#define DCA_STEREO_TOTAL 4
++#define DCA_3F 5
++#define DCA_2F1R 6
++#define DCA_3F1R 7
++#define DCA_2F2R 8
++#define DCA_3F2R 9
++#define DCA_4F2R 10
++
++#define DCA_DOLBY 101 /* FIXME */
++
++#define DCA_CHANNEL_MAX  DCA_3F2R /* We don't handle anything above that */
++#define DCA_CHANNEL_BITS 6
++#define DCA_CHANNEL_MASK 0x3F
++
++#define DCA_LFE 0x80
++#define DCA_ADJUST_LEVEL 0x100
++
++dca_state_t * dca_init (uint32_t mm_accel);
++
++int dca_syncinfo (dca_state_t *state, uint8_t * buf, int * flags,
++                  int * sample_rate, int * bit_rate, int *frame_length);
++
++int dca_frame (dca_state_t * state, uint8_t * buf, int * flags,
++               level_t * level, sample_t bias);
++
++void dca_dynrng (dca_state_t * state,
++                 level_t (* call) (level_t, void *), void * data);
++
++int dca_blocks_num (dca_state_t * state);
++int dca_block (dca_state_t * state);
++
++sample_t * dca_samples (dca_state_t * state);
++
++void dca_free (dca_state_t * state);
++
++#endif /* LIBDCA_DCA_H */
+--- mplayer2-2.0/localinc/dlopen.h.dlopen~	2012-06-05 12:27:10.145116052 +0200
++++ mplayer2-2.0/localinc/dlopen.h	2012-06-05 12:27:10.145116052 +0200
+@@ -0,0 +1,12 @@
++#ifndef LOCALINC_DLOPEN_H
++#define LOCALINC_DLOPEN_H
++#include <dlfcn.h>
++#define num2str(x) str(x)
++#define str(x) #x
++
++#define dl_sym(func, args, lib) \
++	dl_##func = args dlsym(lib, #func); \
++	if ((err = dlerror())) \
++		goto error;
++
++#endif
+--- mplayer2-2.0/localinc/dts.h.dlopen~	2012-06-05 12:27:10.146116039 +0200
++++ mplayer2-2.0/localinc/dts.h	2012-06-05 12:27:10.146116039 +0200
+@@ -0,0 +1,55 @@
++/*
++ * dts.h
++ * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>
++ *
++ * This file is part of libdca, a free DTS Coherent Acoustics stream decoder.
++ * See http://www.videolan.org/developers/libdca.html for updates.
++ *
++ * libdca is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * libdca is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the
++ * Free Software Foundation, Inc.,
++ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++ */
++
++#ifndef LIBDCA_COMPAT_H
++# define LIBDCA_COMPAT_H 1
++# include "dca.h"
++
++typedef struct dca_state_s dts_state_t;
++# define DTS_MONO DCA_MONO
++# define DTS_CHANNEL DCA_CHANNEL
++# define DTS_STEREO DCA_STEREO
++# define DTS_STEREO_SUMDIFF DCA_STEREO_SUMDIFF
++# define DTS_STEREO_TOTAL DCA_STEREO_TOTAL
++# define DTS_3F DCA_3F
++# define DTS_2F1R DCA_2F1R
++# define DTS_3F1R DCA_3F1R
++# define DTS_2F2R DCA_2F2R
++# define DTS_3F2R DCA_3F2R
++# define DTS_4F2R DCA_4F2R
++# define DTS_DOLBY DCA_DOLBY
++# define DTS_CHANNEL_MAX DCA_CHANNEL_MAX
++# define DTS_CHANNEL_BITS DCA_CHANNEL_BITS
++# define DTS_CHANNEL_MASK DCA_CHANNEL_MASK
++# define DTS_LFE DCA_LFE
++# define DTS_ADJUST_LEVEL DCA_ADJUST_LEVEL
++
++# define dts_init dca_init
++# define dts_syncinfo dca_syncinfo
++# define dts_frame dca_frame
++# define dts_dynrng dca_dynrng
++# define dts_blocks_num dca_blocks_num
++# define dts_block dca_block
++# define dts_samples dca_samples
++# define dts_free dca_free
++#endif
+--- mplayer2-2.0/localinc/neaacdec.h.dlopen~	2012-06-05 12:27:10.147116026 +0200
++++ mplayer2-2.0/localinc/neaacdec.h	2012-06-05 12:27:10.147116026 +0200
+@@ -0,0 +1,258 @@
++/*
++** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
++** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
++**  
++** This program is free software; you can redistribute it and/or modify
++** it under the terms of the GNU General Public License as published by
++** the Free Software Foundation; either version 2 of the License, or
++** (at your option) any later version.
++** 
++** This program is distributed in the hope that it will be useful,
++** but WITHOUT ANY WARRANTY; without even the implied warranty of
++** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++** GNU General Public License for more details.
++** 
++** You should have received a copy of the GNU General Public License
++** along with this program; if not, write to the Free Software 
++** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++**
++** Any non-GPL usage of this software or parts of this software is strictly
++** forbidden.
++**
++** The "appropriate copyright message" mentioned in section 2c of the GPLv2
++** must read: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com"
++**
++** Commercial non-GPL licensing of this software is possible.
++** For more info contact Nero AG through Mpeg4AAClicense@nero.com.
++**
++** $Id: neaacdec.h,v 1.13 2009/01/26 23:51:15 menno Exp $
++**/
++
++#ifndef __NEAACDEC_H__
++#define __NEAACDEC_H__
++
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
++
++#if 1
++/* MACROS FOR BACKWARDS COMPATIBILITY */
++/* structs */
++#define faacDecHandle                  NeAACDecHandle
++#define faacDecConfiguration           NeAACDecConfiguration
++#define faacDecConfigurationPtr        NeAACDecConfigurationPtr
++#define faacDecFrameInfo               NeAACDecFrameInfo
++/* functions */
++#define faacDecGetErrorMessage         NeAACDecGetErrorMessage
++#define faacDecSetConfiguration        NeAACDecSetConfiguration
++#define faacDecGetCurrentConfiguration NeAACDecGetCurrentConfiguration
++#define faacDecInit                    NeAACDecInit
++#define faacDecInit2                   NeAACDecInit2
++#define faacDecInitDRM                 NeAACDecInitDRM
++#define faacDecPostSeekReset           NeAACDecPostSeekReset
++#define faacDecOpen                    NeAACDecOpen
++#define faacDecClose                   NeAACDecClose
++#define faacDecDecode                  NeAACDecDecode
++#define AudioSpecificConfig            NeAACDecAudioSpecificConfig
++#endif
++
++
++#ifdef _WIN32
++  #pragma pack(push, 8)
++  #ifndef NEAACDECAPI
++    #define NEAACDECAPI __cdecl
++  #endif
++#else
++  #ifndef NEAACDECAPI
++    #define NEAACDECAPI
++  #endif
++#endif
++
++#define FAAD2_VERSION "2.7"
++
++/* object types for AAC */
++#define MAIN       1
++#define LC         2
++#define SSR        3
++#define LTP        4
++#define HE_AAC     5
++#define ER_LC     17
++#define ER_LTP    19
++#define LD        23
++#define DRM_ER_LC 27 /* special object type for DRM */
++
++/* header types */
++#define RAW        0
++#define ADIF       1
++#define ADTS       2
++#define LATM       3
++
++/* SBR signalling */
++#define NO_SBR           0
++#define SBR_UPSAMPLED    1
++#define SBR_DOWNSAMPLED  2
++#define NO_SBR_UPSAMPLED 3
++
++/* library output formats */
++#define FAAD_FMT_16BIT  1
++#define FAAD_FMT_24BIT  2
++#define FAAD_FMT_32BIT  3
++#define FAAD_FMT_FLOAT  4
++#define FAAD_FMT_FIXED  FAAD_FMT_FLOAT
++#define FAAD_FMT_DOUBLE 5
++
++/* Capabilities */
++#define LC_DEC_CAP           (1<<0) /* Can decode LC */
++#define MAIN_DEC_CAP         (1<<1) /* Can decode MAIN */
++#define LTP_DEC_CAP          (1<<2) /* Can decode LTP */
++#define LD_DEC_CAP           (1<<3) /* Can decode LD */
++#define ERROR_RESILIENCE_CAP (1<<4) /* Can decode ER */
++#define FIXED_POINT_CAP      (1<<5) /* Fixed point */
++
++/* Channel definitions */
++#define FRONT_CHANNEL_CENTER (1)
++#define FRONT_CHANNEL_LEFT   (2)
++#define FRONT_CHANNEL_RIGHT  (3)
++#define SIDE_CHANNEL_LEFT    (4)
++#define SIDE_CHANNEL_RIGHT   (5)
++#define BACK_CHANNEL_LEFT    (6)
++#define BACK_CHANNEL_RIGHT   (7)
++#define BACK_CHANNEL_CENTER  (8)
++#define LFE_CHANNEL          (9)
++#define UNKNOWN_CHANNEL      (0)
++
++/* DRM channel definitions */
++#define DRMCH_MONO          1
++#define DRMCH_STEREO        2
++#define DRMCH_SBR_MONO      3
++#define DRMCH_SBR_STEREO    4
++#define DRMCH_SBR_PS_STEREO 5
++
++
++/* A decode call can eat up to FAAD_MIN_STREAMSIZE bytes per decoded channel,
++   so at least so much bytes per channel should be available in this stream */
++#define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
++
++
++typedef void *NeAACDecHandle;
++
++typedef struct mp4AudioSpecificConfig
++{
++    /* Audio Specific Info */
++    unsigned char objectTypeIndex;
++    unsigned char samplingFrequencyIndex;
++    unsigned long samplingFrequency;
++    unsigned char channelsConfiguration;
++
++    /* GA Specific Info */
++    unsigned char frameLengthFlag;
++    unsigned char dependsOnCoreCoder;
++    unsigned short coreCoderDelay;
++    unsigned char extensionFlag;
++    unsigned char aacSectionDataResilienceFlag;
++    unsigned char aacScalefactorDataResilienceFlag;
++    unsigned char aacSpectralDataResilienceFlag;
++    unsigned char epConfig;
++
++    char sbr_present_flag;
++    char forceUpSampling;
++    char downSampledSBR;
++} mp4AudioSpecificConfig;
++
++typedef struct NeAACDecConfiguration
++{
++    unsigned char defObjectType;
++    unsigned long defSampleRate;
++    unsigned char outputFormat;
++    unsigned char downMatrix;
++    unsigned char useOldADTSFormat;
++    unsigned char dontUpSampleImplicitSBR;
++} NeAACDecConfiguration, *NeAACDecConfigurationPtr;
++
++typedef struct NeAACDecFrameInfo
++{
++    unsigned long bytesconsumed;
++    unsigned long samples;
++    unsigned char channels;
++    unsigned char error;
++    unsigned long samplerate;
++
++    /* SBR: 0: off, 1: on; upsample, 2: on; downsampled, 3: off; upsampled */
++    unsigned char sbr;
++
++    /* MPEG-4 ObjectType */
++    unsigned char object_type;
++
++    /* AAC header type; MP4 will be signalled as RAW also */
++    unsigned char header_type;
++
++    /* multichannel configuration */
++    unsigned char num_front_channels;
++    unsigned char num_side_channels;
++    unsigned char num_back_channels;
++    unsigned char num_lfe_channels;
++    unsigned char channel_position[64];
++
++    /* PS: 0: off, 1: on */
++    unsigned char ps;
++} NeAACDecFrameInfo;
++
++char* NEAACDECAPI NeAACDecGetErrorMessage(unsigned char errcode);
++
++unsigned long NEAACDECAPI NeAACDecGetCapabilities(void);
++
++NeAACDecHandle NEAACDECAPI NeAACDecOpen(void);
++
++NeAACDecConfigurationPtr NEAACDECAPI NeAACDecGetCurrentConfiguration(NeAACDecHandle hDecoder);
++
++unsigned char NEAACDECAPI NeAACDecSetConfiguration(NeAACDecHandle hDecoder,
++                                                   NeAACDecConfigurationPtr config);
++
++/* Init the library based on info from the AAC file (ADTS/ADIF) */
++long NEAACDECAPI NeAACDecInit(NeAACDecHandle hDecoder,
++                              unsigned char *buffer,
++                              unsigned long buffer_size,
++                              unsigned long *samplerate,
++                              unsigned char *channels);
++
++/* Init the library using a DecoderSpecificInfo */
++char NEAACDECAPI NeAACDecInit2(NeAACDecHandle hDecoder,
++                               unsigned char *pBuffer,
++                               unsigned long SizeOfDecoderSpecificInfo,
++                               unsigned long *samplerate,
++                               unsigned char *channels);
++
++/* Init the library for DRM */
++char NEAACDECAPI NeAACDecInitDRM(NeAACDecHandle *hDecoder, unsigned long samplerate,
++                                 unsigned char channels);
++
++void NEAACDECAPI NeAACDecPostSeekReset(NeAACDecHandle hDecoder, long frame);
++
++void NEAACDECAPI NeAACDecClose(NeAACDecHandle hDecoder);
++
++void* NEAACDECAPI NeAACDecDecode(NeAACDecHandle hDecoder,
++                                 NeAACDecFrameInfo *hInfo,
++                                 unsigned char *buffer,
++                                 unsigned long buffer_size);
++
++void* NEAACDECAPI NeAACDecDecode2(NeAACDecHandle hDecoder,
++                                  NeAACDecFrameInfo *hInfo,
++                                  unsigned char *buffer,
++                                  unsigned long buffer_size,
++                                  void **sample_buffer,
++                                  unsigned long sample_buffer_size);
++
++char NEAACDECAPI NeAACDecAudioSpecificConfig(unsigned char *pBuffer,
++                                             unsigned long buffer_size,
++                                             mp4AudioSpecificConfig *mp4ASC);
++
++#ifdef _WIN32
++  #pragma pack(pop)
++#endif
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
++#endif
+--- mplayer2-2.0/localinc/xvid.h.dlopen~	2012-06-05 12:27:10.149116001 +0200
++++ mplayer2-2.0/localinc/xvid.h	2012-06-05 12:27:10.149116001 +0200
+@@ -0,0 +1,830 @@
++/*****************************************************************************
++ *
++ * XVID MPEG-4 VIDEO CODEC
++ * - Xvid Main header file -
++ *
++ *  Copyright(C) 2001-2011 Peter Ross <pross@xvid.org>
++ *
++ *  This program is free software ; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License as published by
++ *  the Free Software Foundation ; either version 2 of the License, or
++ *  (at your option) any later version.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY ; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program ; if not, write to the Free Software
++ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
++ *
++ * $Id: xvid.h 1985 2011-05-18 09:02:35Z Isibaar $
++ *
++ ****************************************************************************/
++
++#ifndef _XVID_H_
++#define _XVID_H_
++
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/*****************************************************************************
++ * versioning
++ ****************************************************************************/
++
++/* versioning
++	version takes the form "$major.$minor.$patch"
++	$patch is incremented when there is no api change
++	$minor is incremented when the api is changed, but remains backwards compatible
++	$major is incremented when the api is changed significantly
++
++	when initialising an xvid structure, you must always zero it, and set the version field.
++		memset(&struct,0,sizeof(struct));
++		struct.version = XVID_VERSION;
++
++	XVID_UNSTABLE is defined only during development.
++	*/
++
++#define XVID_MAKE_VERSION(a,b,c) ((((a)&0xff)<<16) | (((b)&0xff)<<8) | ((c)&0xff))
++#define XVID_VERSION_MAJOR(a)    ((char)(((a)>>16) & 0xff))
++#define XVID_VERSION_MINOR(a)    ((char)(((a)>> 8) & 0xff))
++#define XVID_VERSION_PATCH(a)    ((char)(((a)>> 0) & 0xff))
++
++#define XVID_MAKE_API(a,b)       ((((a)&0xff)<<16) | (((b)&0xff)<<0))
++#define XVID_API_MAJOR(a)        (((a)>>16) & 0xff)
++#define XVID_API_MINOR(a)        (((a)>> 0) & 0xff)
++
++#define XVID_VERSION             XVID_MAKE_VERSION(1,3,2)
++#define XVID_API                 XVID_MAKE_API(4, 3)
++
++/* Bitstream Version
++ * this will be writen into the bitstream to allow easy detection of xvid
++ * encoder bugs in the decoder, without this it might not possible to
++ * automatically distinquish between a file which has been encoded with an
++ * old & buggy XVID from a file which has been encoded with a bugfree version
++ * see the infamous interlacing bug ...
++ *
++ * this MUST be increased if an encoder bug is fixed, increasing it too often
++ * doesnt hurt but not increasing it could cause difficulty for decoders in the
++ * future
++ */
++#define XVID_BS_VERSION 64 
++
++/*****************************************************************************
++ * error codes
++ ****************************************************************************/
++
++	/*	all functions return values <0 indicate error */
++
++#define XVID_ERR_FAIL		-1		/* general fault */
++#define XVID_ERR_MEMORY		-2		/* memory allocation error */
++#define XVID_ERR_FORMAT		-3		/* file format error */
++#define XVID_ERR_VERSION	-4		/* structure version not supported */
++#define XVID_ERR_END		-5		/* encoder only; end of stream reached */
++
++
++
++/*****************************************************************************
++ * xvid_image_t
++ ****************************************************************************/
++
++/* colorspace values */
++
++#define XVID_CSP_PLANAR   (1<< 0) /* 4:2:0 planar (==I420, except for pointers/strides) */
++#define XVID_CSP_USER	  XVID_CSP_PLANAR
++#define XVID_CSP_I420     (1<< 1) /* 4:2:0 planar */
++#define XVID_CSP_YV12     (1<< 2) /* 4:2:0 planar */
++#define XVID_CSP_YUY2     (1<< 3) /* 4:2:2 packed */
++#define XVID_CSP_UYVY     (1<< 4) /* 4:2:2 packed */
++#define XVID_CSP_YVYU     (1<< 5) /* 4:2:2 packed */
++#define XVID_CSP_RGB      (1<<16) /* 24-bit rgb packed */
++#define XVID_CSP_BGRA     (1<< 6) /* 32-bit bgra packed */
++#define XVID_CSP_ABGR     (1<< 7) /* 32-bit abgr packed */
++#define XVID_CSP_RGBA     (1<< 8) /* 32-bit rgba packed */
++#define XVID_CSP_ARGB     (1<<15) /* 32-bit argb packed */
++#define XVID_CSP_BGR      (1<< 9) /* 24-bit bgr packed */
++#define XVID_CSP_RGB555   (1<<10) /* 16-bit rgb555 packed */
++#define XVID_CSP_RGB565   (1<<11) /* 16-bit rgb565 packed */
++#define XVID_CSP_SLICE    (1<<12) /* decoder only: 4:2:0 planar, per slice rendering */
++#define XVID_CSP_INTERNAL (1<<13) /* decoder only: 4:2:0 planar, returns ptrs to internal buffers */
++#define XVID_CSP_NULL     (1<<14) /* decoder only: dont output anything */
++#define XVID_CSP_VFLIP    (1<<31) /* vertical flip mask */
++
++/* xvid_image_t
++	for non-planar colorspaces use only plane[0] and stride[0]
++	four plane reserved for alpha*/
++typedef struct {
++	int csp;				/* [in] colorspace; or with XVID_CSP_VFLIP to perform vertical flip */
++	void * plane[4];		/* [in] image plane ptrs */
++	int stride[4];			/* [in] image stride; "bytes per row"*/
++} xvid_image_t;
++
++/* video-object-sequence profiles */
++#define XVID_PROFILE_S_L0    0x08 /* simple */
++#define XVID_PROFILE_S_L1    0x01
++#define XVID_PROFILE_S_L2    0x02
++#define XVID_PROFILE_S_L3    0x03
++#define XVID_PROFILE_S_L4a   0x04
++#define XVID_PROFILE_S_L5    0x05
++#define XVID_PROFILE_S_L6    0x06
++#define XVID_PROFILE_ARTS_L1 0x91 /* advanced realtime simple */
++#define XVID_PROFILE_ARTS_L2 0x92
++#define XVID_PROFILE_ARTS_L3 0x93
++#define XVID_PROFILE_ARTS_L4 0x94
++#define XVID_PROFILE_AS_L0   0xf0 /* advanced simple */
++#define XVID_PROFILE_AS_L1   0xf1
++#define XVID_PROFILE_AS_L2   0xf2
++#define XVID_PROFILE_AS_L3   0xf3
++#define XVID_PROFILE_AS_L4   0xf4
++
++/* aspect ratios */
++#define XVID_PAR_11_VGA    1 /* 1:1 vga (square), default if supplied PAR is not a valid value */
++#define XVID_PAR_43_PAL    2 /* 4:3 pal (12:11 625-line) */
++#define XVID_PAR_43_NTSC   3 /* 4:3 ntsc (10:11 525-line) */
++#define XVID_PAR_169_PAL   4 /* 16:9 pal (16:11 625-line) */
++#define XVID_PAR_169_NTSC  5 /* 16:9 ntsc (40:33 525-line) */
++#define XVID_PAR_EXT      15 /* extended par; use par_width, par_height */
++
++/* frame type flags */
++#define XVID_TYPE_VOL     -1 /* decoder only: vol was decoded */
++#define XVID_TYPE_NOTHING  0 /* decoder only (encoder stats): nothing was decoded/encoded */
++#define XVID_TYPE_AUTO     0 /* encoder: automatically determine coding type */
++#define XVID_TYPE_IVOP     1 /* intra frame */
++#define XVID_TYPE_PVOP     2 /* predicted frame */
++#define XVID_TYPE_BVOP     3 /* bidirectionally encoded */
++#define XVID_TYPE_SVOP     4 /* predicted+sprite frame */
++
++
++/*****************************************************************************
++ * xvid_global()
++ ****************************************************************************/
++
++/* cpu_flags definitions (make sure to sync this with cpuid.asm for ia32) */
++
++#define XVID_CPU_FORCE    (1<<31) /* force passed cpu flags */
++#define XVID_CPU_ASM      (1<< 7) /* native assembly */
++/* ARCH_IS_IA32 */
++#define XVID_CPU_MMX      (1<< 0) /*       mmx : pentiumMMX,k6 */
++#define XVID_CPU_MMXEXT   (1<< 1) /*   mmx-ext : pentium2, athlon */
++#define XVID_CPU_SSE      (1<< 2) /*       sse : pentium3, athlonXP */
++#define XVID_CPU_SSE2     (1<< 3) /*      sse2 : pentium4, athlon64 */
++#define XVID_CPU_SSE3     (1<< 8) /*      sse3 : pentium4, athlon64 */
++#define XVID_CPU_SSE41    (1<< 9) /*      sse41: penryn */
++#define XVID_CPU_3DNOW    (1<< 4) /*     3dnow : k6-2 */
++#define XVID_CPU_3DNOWEXT (1<< 5) /* 3dnow-ext : athlon */
++#define XVID_CPU_TSC      (1<< 6) /*       tsc : Pentium */
++/* ARCH_IS_PPC */
++#define XVID_CPU_ALTIVEC  (1<< 0) /* altivec */
++
++
++#define XVID_DEBUG_ERROR     (1<< 0)
++#define XVID_DEBUG_STARTCODE (1<< 1)
++#define XVID_DEBUG_HEADER    (1<< 2)
++#define XVID_DEBUG_TIMECODE  (1<< 3)
++#define XVID_DEBUG_MB        (1<< 4)
++#define XVID_DEBUG_COEFF     (1<< 5)
++#define XVID_DEBUG_MV        (1<< 6)
++#define XVID_DEBUG_RC        (1<< 7)
++#define XVID_DEBUG_DEBUG     (1<<31)
++
++/* XVID_GBL_INIT param1 */
++typedef struct {
++	int version;
++	unsigned int cpu_flags; /* [in:opt] zero = autodetect cpu; XVID_CPU_FORCE|{cpu features} = force cpu features */
++	int debug;     /* [in:opt] debug level */
++} xvid_gbl_init_t;
++
++
++/* XVID_GBL_INFO param1 */
++typedef struct {
++	int version;
++	int actual_version; /* [out] returns the actual xvidcore version */
++	const char * build; /* [out] if !null, points to description of this xvid core build */
++	unsigned int cpu_flags;      /* [out] detected cpu features */
++	int num_threads;    /* [out] detected number of cpus/threads */
++} xvid_gbl_info_t;
++
++
++/* XVID_GBL_CONVERT param1 */
++typedef struct {
++	int version;
++	xvid_image_t input;  /* [in] input image & colorspace */
++	xvid_image_t output; /* [in] output image & colorspace */
++	int width;           /* [in] width */
++	int height;          /* [in] height */
++	int interlacing;     /* [in] interlacing */
++} xvid_gbl_convert_t;
++
++
++#define XVID_GBL_INIT    0 /* initialize xvidcore; must be called before using xvid_decore, or xvid_encore) */
++#define XVID_GBL_INFO    1 /* return some info about xvidcore, and the host computer */
++#define XVID_GBL_CONVERT 2 /* colorspace conversion utility */
++
++extern int xvid_global(void *handle, int opt, void *param1, void *param2);
++
++
++/*****************************************************************************
++ * xvid_decore()
++ ****************************************************************************/
++
++#define XVID_DEC_CREATE  0 /* create decore instance; return 0 on success */
++#define XVID_DEC_DESTROY 1 /* destroy decore instance: return 0 on success */
++#define XVID_DEC_DECODE  2 /* decode a frame: returns number of bytes consumed >= 0 */
++
++extern int xvid_decore(void *handle, int opt, void *param1, void *param2);
++
++/* XVID_DEC_CREATE param 1
++	image width & height as well as FourCC code may be specified 
++	here when known in advance (e.g. being read from container) */
++typedef struct {
++	int version;
++	int width;      /* [in:opt] image width */
++	int height;     /* [in:opt] image width */
++	void * handle;  /* [out]    decore context handle */
++/* ------- v1.3.x ------- */
++	int fourcc;     /* [in:opt] fourcc of the input video */
++	int num_threads;/* [in:opt] number of threads to use in decoder */
++} xvid_dec_create_t;
++
++
++/* XVID_DEC_DECODE param1 */
++/* general flags */
++#define XVID_LOWDELAY      (1<<0) /* lowdelay mode  */
++#define XVID_DISCONTINUITY (1<<1) /* indicates break in stream */
++#define XVID_DEBLOCKY      (1<<2) /* perform luma deblocking */
++#define XVID_DEBLOCKUV     (1<<3) /* perform chroma deblocking */
++#define XVID_FILMEFFECT    (1<<4) /* adds film grain */
++#define XVID_DERINGUV      (1<<5) /* perform chroma deringing, requires deblocking to work */
++#define XVID_DERINGY       (1<<6) /* perform luma deringing, requires deblocking to work */
++
++#define XVID_DEC_FAST      (1<<29) /* disable postprocessing to decrease cpu usage *todo* */
++#define XVID_DEC_DROP      (1<<30) /* drop bframes to decrease cpu usage *todo* */
++#define XVID_DEC_PREROLL   (1<<31) /* decode as fast as you can, don't even show output *todo* */
++
++typedef struct {
++	int version;
++	int general;         /* [in:opt] general flags */
++	void *bitstream;     /* [in]     bitstream (read from)*/
++	int length;          /* [in]     bitstream length */
++	xvid_image_t output; /* [in]     output image (written to) */
++/* ------- v1.1.x ------- */
++	int brightness;		 /* [in]	 brightness offset (0=none) */
++} xvid_dec_frame_t;
++
++
++/* XVID_DEC_DECODE param2 :: optional */
++typedef struct
++{
++	int version;
++
++	int type;                   /* [out] output data type */
++	union {
++		struct { /* type>0 {XVID_TYPE_IVOP,XVID_TYPE_PVOP,XVID_TYPE_BVOP,XVID_TYPE_SVOP} */
++			int general;        /* [out] flags */
++			int time_base;      /* [out] time base */
++			int time_increment; /* [out] time increment */
++
++			/* XXX: external deblocking stuff */
++			int * qscale;	    /* [out] pointer to quantizer table */
++			int qscale_stride;  /* [out] quantizer scale stride */
++
++		} vop;
++		struct {	/* XVID_TYPE_VOL */
++			int general;        /* [out] flags */
++			int width;          /* [out] width */
++			int height;         /* [out] height */
++			int par;            /* [out] pixel aspect ratio (refer to XVID_PAR_xxx above) */
++			int par_width;      /* [out] aspect ratio width  [1..255] */
++			int par_height;     /* [out] aspect ratio height [1..255] */
++		} vol;
++	} data;
++} xvid_dec_stats_t;
++
++#define XVID_ZONE_QUANT  (1<<0)
++#define XVID_ZONE_WEIGHT (1<<1)
++
++typedef struct
++{
++	int frame;
++	int mode;
++	int increment;
++	int base;
++} xvid_enc_zone_t;
++
++
++/*----------------------------------------------------------------------------
++ * xvid_enc_stats_t structure
++ *
++ * Used in:
++ *  - xvid_plg_data_t structure
++ *  - optional parameter in xvid_encore() function
++ *
++ * .coding_type = XVID_TYPE_NOTHING if the stats are not given
++ *--------------------------------------------------------------------------*/
++
++typedef struct {
++	int version;
++
++	/* encoding parameters */
++	int type;      /* [out] coding type */
++	int quant;     /* [out] frame quantizer */
++	int vol_flags; /* [out] vol flags (see above) */
++	int vop_flags; /* [out] vop flags (see above) */
++
++	/* bitrate */
++	int length;    /* [out] frame length */
++
++	int hlength;   /* [out] header length (bytes) */
++	int kblks;     /* [out] number of blocks compressed as Intra */
++	int mblks;     /* [out] number of blocks compressed as Inter */
++	int ublks;     /* [out] number of blocks marked as not_coded */
++
++	int sse_y;     /* [out] Y plane's sse */
++	int sse_u;     /* [out] U plane's sse */
++	int sse_v;     /* [out] V plane's sse */
++} xvid_enc_stats_t;
++
++/*****************************************************************************
++  xvid plugin system -- internals
++
++  xvidcore will call XVID_PLG_INFO and XVID_PLG_CREATE during XVID_ENC_CREATE
++  before encoding each frame xvidcore will call XVID_PLG_BEFORE
++  after encoding each frame xvidcore will call XVID_PLG_AFTER
++  xvidcore will call XVID_PLG_DESTROY during XVID_ENC_DESTROY
++ ****************************************************************************/
++
++
++#define XVID_PLG_CREATE  (1<<0)
++#define XVID_PLG_DESTROY (1<<1)
++#define XVID_PLG_INFO    (1<<2)
++#define XVID_PLG_BEFORE  (1<<3)
++#define XVID_PLG_FRAME   (1<<4)
++#define XVID_PLG_AFTER   (1<<5)
++
++/* xvid_plg_info_t.flags */
++#define XVID_REQORIGINAL (1<<0) /* plugin requires a copy of the original (uncompressed) image */
++#define XVID_REQPSNR     (1<<1) /* plugin requires psnr between the uncompressed and compressed image*/
++#define XVID_REQDQUANTS  (1<<2) /* plugin requires access to the dquant table */
++#define XVID_REQLAMBDA   (1<<3) /* plugin requires access to the lambda table */
++
++typedef struct
++{
++	int version;
++	int flags;   /* [in:opt] plugin flags */
++} xvid_plg_info_t;
++
++
++typedef struct
++{
++	int version;
++
++	int num_zones;           /* [out] */
++	xvid_enc_zone_t * zones; /* [out] */
++
++	int width;               /* [out] */
++	int height;              /* [out] */
++	int mb_width;            /* [out] */
++	int mb_height;           /* [out] */
++	int fincr;               /* [out] */
++	int fbase;               /* [out] */
++
++	void * param;            /* [out] */
++} xvid_plg_create_t;
++
++
++typedef struct
++{
++	int version;
++
++	int num_frames; /* [out] total frame encoded */
++} xvid_plg_destroy_t;
++
++typedef struct
++{
++	int version;
++
++	xvid_enc_zone_t * zone; /* [out] current zone */
++
++	int width;              /* [out] */
++	int height;             /* [out] */
++	int mb_width;           /* [out] */
++	int mb_height;          /* [out] */
++	int fincr;              /* [out] */
++	int fbase;              /* [out] */
++
++	int min_quant[3];       /* [out] */
++	int max_quant[3];       /* [out] */
++
++	xvid_image_t reference; /* [out] -> [out] */
++	xvid_image_t current;   /* [out] -> [in,out] */
++	xvid_image_t original;  /* [out] after: points the original (uncompressed) copy of the current frame */
++	int frame_num;          /* [out] frame number */
++
++	int type;               /* [in,out] */
++	int quant;              /* [in,out] */
++
++	int * dquant;           /* [in,out]	pointer to diff quantizer table */
++	int dquant_stride;      /* [in,out]	diff quantizer stride */
++
++	int vop_flags;          /* [in,out] */
++	int vol_flags;          /* [in,out] */
++	int motion_flags;       /* [in,out] */
++
++	/* Lambda table for HVSPlugins */
++	float * lambda;         /* [in,out] six floats for each macroblock. read, multiply, write back */
++
++/* Deprecated, use the stats field instead.
++ * Will disapear before 1.0 */
++	int length;             /* [out] after: length of encoded frame */
++	int kblks;              /* [out] number of blocks compressed as Intra */
++	int mblks;              /* [out] number of blocks compressed as Inter */
++	int ublks;              /* [out] number of blocks marked not_coded */
++	int sse_y;              /* [out] Y plane's sse */
++	int sse_u;              /* [out] U plane's sse */
++	int sse_v;              /* [out] V plane's sse */
++/* End of duplicated data, kept only for binary compatibility */
++
++	int bquant_ratio;       /* [in] */
++	int bquant_offset;      /* [in] */
++
++	xvid_enc_stats_t stats; /* [out] frame statistics */
++} xvid_plg_data_t;
++
++/*****************************************************************************
++  xvid plugin system -- external
++
++  the application passes xvid an array of "xvid_plugin_t" at XVID_ENC_CREATE. the array
++  indicates the plugin function pointer and plugin-specific data.
++  xvidcore handles the rest. example:
++
++  xvid_enc_create_t create;
++  xvid_enc_plugin_t plugins[2];
++
++  plugins[0].func = xvid_psnr_func;
++  plugins[0].param = NULL;
++  plugins[1].func = xvid_cbr_func;
++  plugins[1].param = &cbr_data;
++
++  create.num_plugins = 2;
++  create.plugins = plugins;
++
++ ****************************************************************************/
++
++typedef int (xvid_plugin_func)(void * handle, int opt, void * param1, void * param2);
++
++typedef struct
++{
++	xvid_plugin_func * func;
++	void * param;
++} xvid_enc_plugin_t;
++
++
++extern xvid_plugin_func xvid_plugin_single;   /* single-pass rate control */
++extern xvid_plugin_func xvid_plugin_2pass1;   /* two-pass rate control: first pass */
++extern xvid_plugin_func xvid_plugin_2pass2;   /* two-pass rate control: second pass */
++
++extern xvid_plugin_func xvid_plugin_lumimasking;  /* lumimasking */
++
++extern xvid_plugin_func xvid_plugin_psnr;	/* write psnr values to stdout */
++extern xvid_plugin_func xvid_plugin_dump;	/* dump before and after yuvpgms */
++
++extern xvid_plugin_func xvid_plugin_ssim;	    /*write ssim values to stdout*/
++extern xvid_plugin_func xvid_plugin_psnrhvsm;	/*write psnrhvsm values to stdout*/
++
++
++/* single pass rate control
++ * CBR and Constant quantizer modes */
++typedef struct
++{
++	int version;
++
++	int bitrate;               /* [in] bits per second */
++	int reaction_delay_factor; /* [in] */
++	int averaging_period;      /* [in] */
++	int buffer;                /* [in] */
++} xvid_plugin_single_t;
++
++
++typedef struct {
++	int version;
++
++	char * filename;
++} xvid_plugin_2pass1_t;
++
++
++#define XVID_PAYBACK_BIAS 0 /* payback with bias */
++#define XVID_PAYBACK_PROP 1 /* payback proportionally */
++
++typedef struct {
++	int version;
++
++	int bitrate;                  /* [in] target bitrate (bits per second) */
++	char * filename;              /* [in] first pass stats filename */
++
++	int keyframe_boost;           /* [in] keyframe boost percentage: [0..100] */
++	int curve_compression_high;   /* [in] percentage of compression performed on the high part of the curve (above average) */
++	int curve_compression_low;    /* [in] percentage of compression performed on the low  part of the curve (below average) */
++	int overflow_control_strength;/* [in] Payback delay expressed in number of frames */
++	int max_overflow_improvement; /* [in] percentage of allowed range for a frame that gets bigger because of overflow bonus */
++	int max_overflow_degradation; /* [in] percentage of allowed range for a frame that gets smaller because of overflow penalty */
++
++	int kfreduction;              /* [in] maximum bitrate reduction applied to an iframe under the kfthreshold distance limit */
++	int kfthreshold;              /* [in] if an iframe is closer to the next iframe than this distance, a quantity of bits
++								   *      is substracted from its bit allocation. The reduction is computed as multiples of
++								   *      kfreduction/kthreshold. It reaches kfreduction when the distance == kfthreshold,
++								   *      0 for 1<distance<kfthreshold */
++
++	int container_frame_overhead; /* [in] How many bytes the controller has to compensate per frame due to container format overhead */
++
++/* ------- v1.1.x ------- */
++	int vbv_size;                 /* [in] buffer size (bits) If this is zero, VBV check is disabled.*/
++	int vbv_initial;              /* [in] initial buffer occupancy (bits) */
++	int vbv_maxrate;              /* [in] max processing bitrate (bits per second) */
++	int vbv_peakrate;             /* [in:opt] max average bitrate over 1 second (bits per second).
++								   *          This is used for diagnostics only and won't affect the actual peak bitrate.
++								   *          This is not a problem as long as vbv_peakrate > vbv_size + vbv_maxrate which
++								   *          guarantees that vbv_peakrate won't be exceeded. */
++}xvid_plugin_2pass2_t;
++
++
++typedef struct{
++	/*stat output*/
++	int b_printstat;
++	char* stat_path;
++	
++	/*visualize*/
++	int b_visualize;
++
++	/*accuracy 0 very accurate 4 very fast*/
++	int acc; 
++
++    int cpu_flags; /* XVID_CPU_XXX flags */
++
++} xvid_plugin_ssim_t;
++
++typedef struct {
++        int version;
++
++        int method;      /* [in] masking method to apply. 0 for luminance masking, 1 for variance masking */
++} xvid_plugin_lumimasking_t;
++
++/*****************************************************************************
++ *                             ENCODER API
++ ****************************************************************************/
++
++/*----------------------------------------------------------------------------
++ * Encoder operations
++ *--------------------------------------------------------------------------*/
++
++#define XVID_ENC_CREATE  0 /* create encoder instance; returns 0 on success */
++#define XVID_ENC_DESTROY 1 /* destroy encoder instance; returns 0 on success */
++#define XVID_ENC_ENCODE  2 /* encode a frame: returns number of ouput bytes
++                            * 0 means this frame should not be written (ie. encoder lag) */
++
++
++/*----------------------------------------------------------------------------
++ * Encoder entry point
++ *--------------------------------------------------------------------------*/
++
++extern int xvid_encore(void *handle, int opt, void *param1, void *param2);
++
++/* Quick API reference
++ *
++ * XVID_ENC_CREATE operation
++ *  - handle: ignored
++ *  - opt: XVID_ENC_CREATE
++ *  - param1: address of a xvid_enc_create_t structure
++ *  - param2: ignored
++ *
++ * XVID_ENC_ENCODE operation
++ *  - handle: an instance returned by a CREATE op
++ *  - opt: XVID_ENC_ENCODE
++ *  - param1: address of a xvid_enc_frame_t structure
++ *  - param2: address of a xvid_enc_stats_t structure (optional)
++ *            its return value is asynchronous to what is written to the buffer
++ *            depending on the delay introduced by bvop use. It's display
++ *            ordered.
++ *
++ * XVID_ENC_DESTROY operation
++ *  - handle: an instance returned by a CREATE op
++ *  - opt: XVID_ENC_DESTROY
++ *  - param1: ignored
++ *  - param2: ignored
++ */
++
++
++/*----------------------------------------------------------------------------
++ * "Global" flags
++ *
++ * These flags are used for xvid_enc_create_t->global field during instance
++ * creation (operation XVID_ENC_CREATE)
++ *--------------------------------------------------------------------------*/
++
++#define XVID_GLOBAL_PACKED            (1<<0) /* packed bitstream */
++#define XVID_GLOBAL_CLOSED_GOP        (1<<1) /* closed_gop:	was DX50BVOP dx50 bvop compatibility */
++#define XVID_GLOBAL_EXTRASTATS_ENABLE (1<<2)
++#if 0
++#define XVID_GLOBAL_VOL_AT_IVOP       (1<<3) /* write vol at every ivop: WIN32/divx compatibility */
++#define XVID_GLOBAL_FORCE_VOL         (1<<4) /* when vol-based parameters are changed, insert an ivop NOT recommended */
++#endif
++#define XVID_GLOBAL_DIVX5_USERDATA    (1<<5) /* write divx5 userdata string 
++                                                this is implied if XVID_GLOBAL_PACKED is set */
++
++/*----------------------------------------------------------------------------
++ * "VOL" flags
++ *
++ * These flags are used for xvid_enc_frame_t->vol_flags field during frame
++ * encoding (operation XVID_ENC_ENCODE)
++ *--------------------------------------------------------------------------*/
++
++#define XVID_VOL_MPEGQUANT      (1<<0) /* enable MPEG type quantization */
++#define XVID_VOL_EXTRASTATS     (1<<1) /* enable plane sse stats */
++#define XVID_VOL_QUARTERPEL     (1<<2) /* enable quarterpel: frames will encoded as quarterpel */
++#define XVID_VOL_GMC            (1<<3) /* enable GMC; frames will be checked for gmc suitability */
++#define XVID_VOL_REDUCED_ENABLE (1<<4) /* enable reduced resolution vops: frames will be checked for rrv suitability */
++									   /* NOTE:  the reduced resolution feature is not supported anymore. This flag will have no effect! */
++#define XVID_VOL_INTERLACING    (1<<5) /* enable interlaced encoding */
++
++
++/*----------------------------------------------------------------------------
++ * "VOP" flags
++ *
++ * These flags are used for xvid_enc_frame_t->vop_flags field during frame
++ * encoding (operation XVID_ENC_ENCODE)
++ *--------------------------------------------------------------------------*/
++
++/* Always valid */
++#define XVID_VOP_DEBUG                (1<< 0) /* print debug messages in frames */
++#define XVID_VOP_HALFPEL              (1<< 1) /* use halfpel interpolation */
++#define XVID_VOP_INTER4V              (1<< 2) /* use 4 motion vectors per MB */
++#define XVID_VOP_TRELLISQUANT         (1<< 3) /* use trellis based R-D "optimal" quantization */
++#define XVID_VOP_CHROMAOPT            (1<< 4) /* enable chroma optimization pre-filter */
++#define XVID_VOP_CARTOON              (1<< 5) /* use 'cartoon mode' */
++#define XVID_VOP_GREYSCALE            (1<< 6) /* enable greyscale only mode (even for  color input material chroma is ignored) */
++#define XVID_VOP_HQACPRED             (1<< 7) /* high quality ac prediction */
++#define XVID_VOP_MODEDECISION_RD      (1<< 8) /* enable DCT-ME and use it for mode decision */
++#define XVID_VOP_FAST_MODEDECISION_RD (1<<12) /* use simplified R-D mode decision */
++#define XVID_VOP_RD_BVOP              (1<<13) /* enable rate-distortion mode decision in b-frames */
++#define XVID_VOP_RD_PSNRHVSM          (1<<14) /* use PSNR-HVS-M as metric for rate-distortion optimizations */
++
++/* Only valid for vol_flags|=XVID_VOL_INTERLACING */
++#define XVID_VOP_TOPFIELDFIRST        (1<< 9) /* set top-field-first flag  */
++#define XVID_VOP_ALTERNATESCAN        (1<<10) /* set alternate vertical scan flag */
++
++/* only valid for vol_flags|=XVID_VOL_REDUCED_ENABLED */
++#define XVID_VOP_REDUCED              (1<<11) /* reduced resolution vop */
++											  /* NOTE: reduced resolution feature is not supported anymore. This flag will have no effect! */
++
++/*----------------------------------------------------------------------------
++ * "Motion" flags
++ *
++ * These flags are used for xvid_enc_frame_t->motion field during frame
++ * encoding (operation XVID_ENC_ENCODE)
++ *--------------------------------------------------------------------------*/
++
++/* Motion Estimation Search Patterns */
++#define XVID_ME_ADVANCEDDIAMOND16     (1<< 0) /* use advdiamonds instead of diamonds as search pattern */
++#define XVID_ME_ADVANCEDDIAMOND8      (1<< 1) /* use advdiamond for XVID_ME_EXTSEARCH8 */
++#define XVID_ME_USESQUARES16          (1<< 2) /* use squares instead of diamonds as search pattern */
++#define XVID_ME_USESQUARES8           (1<< 3) /* use square for XVID_ME_EXTSEARCH8 */
++
++/* SAD operator based flags */
++#define XVID_ME_HALFPELREFINE16       (1<< 4)
++#define XVID_ME_HALFPELREFINE8        (1<< 6)
++#define XVID_ME_QUARTERPELREFINE16    (1<< 7)
++#define XVID_ME_QUARTERPELREFINE8     (1<< 8)
++#define XVID_ME_GME_REFINE            (1<< 9)
++#define XVID_ME_EXTSEARCH16           (1<<10) /* extend PMV by more searches */
++#define XVID_ME_EXTSEARCH8            (1<<11) /* use diamond/square for extended 8x8 search */
++#define XVID_ME_CHROMA_PVOP           (1<<12) /* also use chroma for P_VOP/S_VOP ME */
++#define XVID_ME_CHROMA_BVOP           (1<<13) /* also use chroma for B_VOP ME */
++#define XVID_ME_FASTREFINE16          (1<<25) /* use low-complexity refinement functions */
++#define XVID_ME_FASTREFINE8           (1<<29) /* low-complexity 8x8 sub-block refinement */
++
++/* Rate Distortion based flags
++ * Valid when XVID_VOP_MODEDECISION_RD is enabled */
++#define XVID_ME_HALFPELREFINE16_RD    (1<<14) /* perform RD-based halfpel refinement */
++#define XVID_ME_HALFPELREFINE8_RD     (1<<15) /* perform RD-based halfpel refinement for 8x8 mode */
++#define XVID_ME_QUARTERPELREFINE16_RD (1<<16) /* perform RD-based qpel refinement */
++#define XVID_ME_QUARTERPELREFINE8_RD  (1<<17) /* perform RD-based qpel refinement for 8x8 mode */
++#define XVID_ME_EXTSEARCH_RD          (1<<18) /* perform RD-based search using square pattern enable XVID_ME_EXTSEARCH8 to do this in 8x8 search as well */
++#define XVID_ME_CHECKPREDICTION_RD    (1<<19) /* always check vector equal to prediction */
++
++/* Other */
++#define XVID_ME_DETECT_STATIC_MOTION  (1<<24) /* speed-up ME by detecting stationary scenes */
++#define XVID_ME_SKIP_DELTASEARCH      (1<<26) /* speed-up by skipping b-frame delta search */
++#define XVID_ME_FAST_MODEINTERPOLATE  (1<<27) /* speed-up by partly skipping interpolate mode */
++#define XVID_ME_BFRAME_EARLYSTOP      (1<<28) /* speed-up by early exiting b-search */
++
++/* Unused */
++#define XVID_ME_UNRESTRICTED16        (1<<20) /* unrestricted ME, not implemented */
++#define XVID_ME_OVERLAPPING16         (1<<21) /* overlapping ME, not implemented */
++#define XVID_ME_UNRESTRICTED8         (1<<22) /* unrestricted ME, not implemented */
++#define XVID_ME_OVERLAPPING8          (1<<23) /* overlapping ME, not implemented */
++
++
++/*----------------------------------------------------------------------------
++ * xvid_enc_create_t structure definition
++ *
++ * This structure is passed as param1 during an instance creation (operation
++ * XVID_ENC_CREATE)
++ *--------------------------------------------------------------------------*/
++
++typedef struct {
++	int version;
++
++	int profile;                 /* [in] profile@level; refer to XVID_PROFILE_xxx */
++	int width;                   /* [in] frame dimensions; width, pixel units */
++	int height;                  /* [in] frame dimensions; height, pixel units */
++
++	int num_zones;               /* [in:opt] number of bitrate zones */
++	xvid_enc_zone_t * zones;     /*          ^^ zone array */
++
++	int num_plugins;             /* [in:opt] number of plugins */
++	xvid_enc_plugin_t * plugins; /*          ^^ plugin array */
++
++	int num_threads;             /* [in:opt] number of threads to use in encoder */
++	int max_bframes;             /* [in:opt] max sequential bframes (0=disable bframes) */
++
++	int global;                  /* [in:opt] global flags; controls encoding behavior */
++
++	/* --- vol-based stuff; included here for convenience */
++	int fincr;                   /* [in:opt] framerate increment; set to zero for variable framerate */
++	int fbase;                   /* [in] framerate base frame_duration = fincr/fbase seconds*/
++    /* ---------------------------------------------- */
++
++	/* --- vop-based; included here for convenience */
++	int max_key_interval;        /* [in:opt] the maximum interval between key frames */
++
++	int frame_drop_ratio;        /* [in:opt] frame dropping: 0=drop none... 100=drop all */
++
++	int bquant_ratio;            /* [in:opt] bframe quantizer multipier/offeset; used to decide bframes quant when bquant==-1 */
++	int bquant_offset;           /* bquant = (avg(past_ref_quant,future_ref_quant)*bquant_ratio + bquant_offset) / 100 */
++
++	int min_quant[3];            /* [in:opt] */
++	int max_quant[3];            /* [in:opt] */
++	/* ---------------------------------------------- */
++
++	void *handle;                /* [out] encoder instance handle */
++
++	/* ------- v1.3.x ------- */
++	int start_frame_num;         /* [in:opt] frame number of start frame relative to zones definitions. allows to encode sub-sequences */
++	int num_slices;              /* [in:opt] number of slices to code for each frame */
++} xvid_enc_create_t;
++
++
++/*----------------------------------------------------------------------------
++ * xvid_enc_frame_t structure definition
++ *
++ * This structure is passed as param1 during a frame encoding (operation
++ * XVID_ENC_ENCODE)
++ *--------------------------------------------------------------------------*/
++
++/* out value for the frame structure->type field
++ * unlike stats output in param2, this field is not asynchronous and tells
++ * the client app, if the frame written into the stream buffer is an ivop
++ * usually used for indexing purpose in the container */
++#define XVID_KEYFRAME (1<<1)
++
++/* The structure */
++typedef struct {
++	int version;
++
++	/* VOL related stuff
++	 * unless XVID_FORCEVOL is set, the encoder will not react to any changes
++	 * here until the next VOL (keyframe). */
++
++	int vol_flags;                     /* [in] vol flags */
++	unsigned char *quant_intra_matrix; /* [in:opt] custom intra qmatrix */
++	unsigned char *quant_inter_matrix; /* [in:opt] custom inter qmatrix */
++
++	int par;                           /* [in:opt] pixel aspect ratio (refer to XVID_PAR_xxx above) */
++	int par_width;                     /* [in:opt] aspect ratio width */
++	int par_height;                    /* [in:opt] aspect ratio height */
++
++	/* Other fields that can change on a frame base */
++
++	int fincr;                         /* [in:opt] framerate increment, for variable framerate only */
++	int vop_flags;                     /* [in] (general)vop-based flags */
++	int motion;                        /* [in] ME options */
++
++	xvid_image_t input;                /* [in] input image (read from) */
++
++	int type;                          /* [in:opt] coding type */
++	int quant;                         /* [in] frame quantizer; if <=0, automatic (ratecontrol) */
++	int bframe_threshold;
++
++	void *bitstream;                   /* [in:opt] bitstream ptr (written to)*/
++	int length;                        /* [in:opt] bitstream length (bytes) */
++
++	int out_flags;                     /* [out] bitstream output flags */
++} xvid_enc_frame_t;
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif

@@ -1,0 +1,11 @@
+--- mplayer2-2.0/configure.libpostproc~	2012-01-10 19:53:58.116713573 +0100
++++ mplayer2-2.0/configure	2012-01-10 19:53:59.094712104 +0100
+@@ -6003,7 +6003,7 @@ echores "$_live"
+ 
+ 
+ 
+-all_libav_libs="libavutil >= 51.7.0:libavcodec >= 53.5.0:libavformat >= 53.2.0:libswscale >= 2.0.0:libpostproc >= 52.0.0"
++all_libav_libs="libavutil >= 51.7.0:libavcodec >= 53.5.0:libavformat >= 53.2.0:libswscale >= 2.0.0:libpostproc >= 51.2.0"
+ echocheck "Libav ($all_libav_libs)"
+ if test "$ffmpeg" = auto ; then
+   IFS=":"   # shell should not be used for programming
