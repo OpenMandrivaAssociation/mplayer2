@@ -67,7 +67,7 @@ Patch0:		mplayer-mdvconfig.patch
 Patch28:	mplayer-rtsp-extra-fixes.patch
 Patch39:	mplayer2-20120605-dlopen-libfaad-libdca-and-libxvidcore.patch
 Patch40:	mplayer2-20120110-fix-required-libpostproc-version.patch
-URL:		http://www.mplayer2.org
+URL:		https://www.mplayer2.org
 License:	GPLv3
 Group:		Video
 BuildRequires:	ffmpeg-devel >= 0.9.1
