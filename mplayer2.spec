@@ -70,6 +70,11 @@ Patch40:	mplayer2-20120110-fix-required-libpostproc-version.patch
 URL:		https://www.mplayer2.org
 License:	GPLv3
 Group:		Video
+BuildRequires:	autoconf
+BuildRequires:	automake
+BuildRequires:	libtool-base
+BuildRequires:	slibtool
+BuildRequires:	make
 BuildRequires:	ffmpeg-devel >= 0.9.1
 BuildRequires:	pkgconfig(ncurses)
 %if %{with aa}
